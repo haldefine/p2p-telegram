@@ -1,0 +1,14 @@
+[Unit]
+Description=Telegram P2P Bot
+After=network.target
+
+[Service]
+ExecStart=node bot.js
+ExecReload=node bot.js
+WorkingDirectory=/opt/tg_p2p_bot
+KillMode=process
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

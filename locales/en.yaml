@@ -1,0 +1,55 @@
+start_message: '🎉 Welcome to the P2P Bot! Delighted to have you here! 🌟
+
+
+Unlock the full potential of your trading with our bot and experience the following advantages:
+
+🔸 Boost Your Earnings: Enjoy up to a 10% return from each transaction, completely risk-free!
+
+🔸 Efficiency at Your Fingertips: Automatically place buy orders up to 85 times faster than manual methods.
+
+🔸 Fully Compliant: Our bot adheres to all exchange regulations, ensuring your trading activities are safe from bans.
+
+🚀 Start Your Free Trial Now! Click the button below to activate your trial and step into a world of optimized trading. No risks, just rewards!'
+
+menu3days_message: '🕒 You’re Currently on a Trial Period
+
+Your trial will end on ${end_date}
+
+To continue enjoying full access to our bot’s features, consider purchasing a subscription. Unlock all the tools and services designed to enhance your trading experience.
+
+
+🚀 Buy Subscription
+
+Click the button below to upgrade now and maintain uninterrupted access to all functionalities!'
+
+trial3days_message: '🎉 Your 3-Day Free Trial Has Begun! We’re excited to offer you a taste of our services. During this trial period, you can receive orders in the currency you’ve specified. Explore the benefits and capabilities of our platform with no restrictions.
+
+
+Make the most of your trial and see how our services can enhance your trading strategies. Enjoy your experience! 🚀'
+
+enterCurrency_message: '🌍 Choose Your Currency! To customize your trading experience, please select the currency in which you would like to receive orders. Examples include USD, RUB, UAH, among others.
+
+Simply enter your preferred currency to get started and tailor the trading process to your needs. Happy trading! 🚀'
+currencyIsCorrect_message: '✅ Currency Selection Confirmed! You have chosen ${currency} as your currency. All orders in ${currency} will now be directed to you.'
+
+subscribeChannels_message: 'To continue enjoying our bot’s services, please subscribe to our channel. This will keep you updated with the latest features, tips, and important announcements.'
+
+startRemind_message: '🚀 Begin Your Experience Now! Dive into our platform’s features by selecting an option from the menu.'
+currencyRemind_message: '💹 Choose Your Currency Now! Please make your selection to continue enjoying our services tailored just for you.'
+subscribeRemind_message: '🔗 Subscribe to Start Your Trial Click the button below to subscribe and gain immediate access to the trial. This is where your enhanced trading journey begins!
+
+Don’t miss out on starting your trial with all the benefits. Subscribe now!'
+
+incorrectCurrency_message: '⚠️ Incorrect Currency Entered. It looks like there might have been an error in the currency you entered.
+
+🔍 Similar Currencies Based on Your Entry: ${currencies}'
+
+startTrial_button: '🎉Start Your Free Trial!'
+buySub_button: '💸Buy subscription'
+information_button: '📖Information'
+
+changeTrialPeriod_button: '🔄Change Your Trial Period'
+
+start_button: 'Start'
+
+checkSubscribe_button: 'I have subscribed'
