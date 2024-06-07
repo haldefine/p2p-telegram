@@ -6,6 +6,11 @@ const helper = require('../scripts/helper');
 const timer = require('../scripts/timer');
 
 const { sender } = require('../services/sender');
+const {
+    userDBService,
+    botDBService
+} = require('../services/db');
+const BotService = require('../services/bot-service');
 
 const CURRENCIES_REG = /(UAH|RUB|USD)/g;
 
@@ -22,7 +27,7 @@ function start3daysTrial() {
             data
         } = ctx.scene.state;
 
-        const message = messages.trial3daysSettings(user.locale, step, data, message_id);
+        const message = messages.trial3daysSettings(user.lang, step, data, message_id);
 
         ctx.session.remindTimerId = timer.remind(user, 'currency');
 
@@ -53,12 +58,12 @@ function start3daysTrial() {
 
                 clearTimeout(ctx.session.remindTimerId);
             } else {
-                message = messages.incorrectCurrency(user.locale, CURRENCIES_REG);
+                message = messages.incorrectCurrency(user.lang, CURRENCIES_REG);
             }
         }
 
         if (isCorrect) {
-            message = messages.trial3daysSettings(user.locale, ctx.scene.state.step, ctx.scene.state.data);
+            message = messages.trial3daysSettings(user.lang, ctx.scene.state.step, ctx.scene.state.data);
         }
 
         if (message) {
@@ -68,9 +73,11 @@ function start3daysTrial() {
         if (isLeave) {
             const channels = await helper.getChannels();
 
+            await userDBService.update({ tg_id: user.tg_id }, ctx.scene.state.data);
+
             sender.enqueue({
-                chat_id: ctx.from.id,
-                message: messages.subscribeChannels(user.locale, channels)
+                chat_id: user.tg_id,
+                message: messages.subscribeChannels(user.lang, channels)
             });
 
             ctx.session.remindTimerId = timer.remind(user, 'subscribe');

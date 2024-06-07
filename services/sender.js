@@ -1,6 +1,9 @@
 const { Queue } = require('../modules/queue');
 
-const { userService } = require('./db');
+const {
+    userDBService,
+    messageDBService
+} = require('./db');
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -30,6 +33,22 @@ class Sender extends Queue {
 
             if (message.delete) {
                 setTimeout(() => this.deleteMessage(chat_id, res.message_id), message.delete);
+            }
+
+            if (message.expande) {
+                await messageDBService.create({
+                    chat_id: chat_id,
+                    message_id: res.message_id,
+                    message: message.expande
+                });
+            }
+
+            if (message.collapse) {
+                await messageDBService.create({
+                    chat_id: chat_id,
+                    message_id: res.message_id,
+                    message: message.collapse
+                });
             }
 
             if (this.counter % 29 === 0) {
@@ -244,7 +263,7 @@ class Sender extends Queue {
                 (response.description === 'Forbidden: bot was blocked by the user' ||
                 response.description === "Forbidden: bot can't initiate conversation with a user" ||
                 response.description === 'Forbidden: user is deactivated')) {
-                    return await userService.update({ tg_id: chatId }, {
+                    return await userDBService.update({ tg_id: chatId }, {
                         isActive: false
                     });
             } else {

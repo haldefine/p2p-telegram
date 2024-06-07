@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
-const { User } = require('../models/User');
+const { Message, User } = require('../models/User');
+const { Proxy, Bot } = require('../models/Bot');
 
 const DB_CONN = process.env.DB_CONN;
 
@@ -57,8 +58,14 @@ class DBMethods {
     }
 }
 
-const userService = new DBMethods(User);
+const messageDBService = new DBMethods(Message);
+const userDBService = new DBMethods(User);
+const proxyDBService = new DBMethods(Proxy);
+const botDBService = new DBMethods(Bot);
 
 module.exports = {
-    userService
+    messageDBService,
+    userDBService,
+    proxyDBService,
+    botDBService
 }

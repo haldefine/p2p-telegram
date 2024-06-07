@@ -3,7 +3,12 @@ const helper = require('./helper');
 const timer = require('./timer');
 
 const { sender } = require('../services/sender');
-const { userService } = require('../services/db');
+const {
+    messageDBService,
+    userDBService,
+    botDBService
+} = require('../services/db');
+const BotService = require('../services/bot-service');
 
 const stnk = process.env.STNK_ID;
 
@@ -14,39 +19,39 @@ const start = async (ctx, next) => {
 
     if (message && message.chat.type === 'private') {
         try {
-            const locale = (LANGUAGES.test(ctx.from.language_code)) ?
+            const lang = (LANGUAGES.test(ctx.from.language_code)) ?
                 ctx.from.language_code : 'en';
             const username = ctx.chat.username || ctx.from.username || ctx.from.first_name;
-            const status = (message.text && message.text.includes('/start ')) ?
-                message.text.replace('/start ', '') : 'default';
-            const end_date = new Date();
+            const registrationStatus = (message.text && message.text.includes('/start ')) ?
+                message.text.replace('/start ', '') : '3orders';
+            const subscription_end_date = new Date();
 
-            if (status === '3days') {
-                end_date.setDate(end_date.getDate() + 3);
+            if (registrationStatus === '3days') {
+                subscription_end_date.setDate(subscription_end_date.getDate() + 3);
             }
 
-            ctx.state.user = await userService.get({ tg_id: ctx.from.id });
+            ctx.state.user = await userDBService.get({ tg_id: ctx.from.id });
 
             if (!ctx.state.user) {
-                ctx.state.user = await userService.create({
+                ctx.state.user = await userDBService.create({
                     tg_id: ctx.from.id,
                     tg_username: username,
-                    isAdmin: false,
                     isActive: true,
-                    locale,
-                    status,
-                    end_date
+                    lang,
+                    subscription_end_date,
+                    role: 'user',
+                    registrationStatus
                 });
             }
 
-            await ctx.i18n.locale(locale);
+            await ctx.i18n.locale(lang);
 
             if (ctx.state.user.tg_username !== username ||
-                ctx.state.user.locale !== locale) {
-                    ctx.state.user = await userService.update({ tg_id: ctx.from.id }, {
+                ctx.state.user.lang !== lang) {
+                    ctx.state.user = await userDBService.update({ tg_id: ctx.from.id }, {
                         isActive: true,
                         tg_username:  username,
-                        locale
+                        lang
                     }, 'after');
             }
         } catch (error) {
@@ -70,7 +75,7 @@ const commands = async (ctx, next) => {
         let response_message = null;
 
         if (text.includes('/start')) {
-            response_message = messages.start(user.locale);
+            response_message = messages.start(user.lang);
 
             ctx.session.remindTimerId = timer.remind(user, 'start');
         }
@@ -100,11 +105,11 @@ const cb = async (ctx, next) => {
             response_message = null;
 
         if (match[0] === 'trial') {
-            if (user.status === '3days') {
-                response_message = messages.trial3days(user.locale, callback_query.message.message_id);
+            if (user.registrationStatus === '3days') {
+                response_message = messages.trial3days(user.lang, callback_query.message.message_id);
             }
         } else if (match[0] === '3days') {
-            if (user.status === '3days') {
+            if (user.registrationStatus === '3days') {
                 clearTimeout(ctx.session.remindTimerId);
 
                 return await ctx.scene.enter('trial_3days', {
@@ -121,9 +126,41 @@ const cb = async (ctx, next) => {
                 const subscriber = await helper.checkSubscribe(channels, ctx.from.id);
 
                 if (subscriber.isMember) {
-                    response_message = messages.menu(user.locale, user, callback_query.message.message_id);
+                    if (user.registrationStatus === '3days') {
+                        const type = user.registrationStatus;
+                        const check = await botDBService.get({
+                            type,
+                            fiat: user.currency
+                        });
+            
+                        if (check) {
+                            await botDBService.update({ id: check.id }, {
+                                $addToSet: {
+                                    assignedToUser: user.tg_id
+                                }
+                            });
+                            await userDBService.update({ tg_id: user.tg_id }, {
+                                $addToSet: {
+                                    assignedBots: check.id
+                                }
+                            });
+                        } else {
+                            const _bot = await BotService.createBot(user, type);
+
+                            await BotService.startBot(_bot.id);
+                        }
+                    }
+
+                    response_message = messages.menu(user.lang, user, callback_query.message.message_id);
                 }
             }
+        } else if (match[0] === 'expande' || match[0] === 'collapse') {
+            const { message } = await messageDBService.get({
+                chat_id: ctx.from.id,
+                message_id: callback_query.message.message_id
+            });
+
+            response_message = message;
         }
 
         if (response_message) {

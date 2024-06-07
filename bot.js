@@ -14,9 +14,13 @@ const middlewares = require('./scripts/middlewares');
 const messages = require('./scripts/messages');
 
 const {
-    userService,
+    userDBService,
 } = require('./services/db');
 const { sender } = require('./services/sender');
+
+const WebService = require('./services/web-service');
+const EventsService = require('./services/events-service');
+const BinanceService = require('./services/binance-service');
 
 const profile = require('./scenes/profile');
 
@@ -71,6 +75,8 @@ bot.telegram.getMe().then((botInfo) => {
 });
 
 sender.create(bot);
+
+WebService.setEventHandler(EventsService.handleEvent);
 
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));

@@ -10,8 +10,13 @@
   "author": "Stinky",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.7.2",
+    "body-parser": "^1.20.2",
+    "crypto-js": "^4.2.0",
     "dotenv": "^8.2.0",
+    "express": "^4.19.2",
     "mongoose": "^8.1.2",
+    "nanoid": "^3.1.21",
     "node-fetch": "^2.6.1",
     "telegraf": "^3.38.0",
     "telegraf-i18n": "^6.6.0",

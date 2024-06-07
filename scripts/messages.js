@@ -15,20 +15,20 @@ const i18n = new TelegrafI18n({
 
 const DELETE_DELAY = 10000;
 
-const start = (locale) => {
+const start = (lang) => {
     const CONFIG = JSON.parse(fs.readFileSync('./config.json'));
 
     const message = {
         type: 'text',
-        text: i18n.t(locale, 'start_message'),
+        text: i18n.t(lang, 'start_message'),
         extra: {
             reply_markup: {
                 inline_keyboard: [
                     [
-                        { text: i18n.t(locale, 'startTrial_button'), callback_data: 'trial' },
-                        { text: i18n.t(locale, 'buySub_button'), callback_data: 'buy-sub' },
+                        { text: i18n.t(lang, 'startTrial_button'), callback_data: 'trial' },
+                        { text: i18n.t(lang, 'buySub_button'), callback_data: 'buy-sub' },
                     ],
-                    [{ text: i18n.t(locale, 'information_button'), url: CONFIG['INFORMATION_URL'] }]
+                    [{ text: i18n.t(lang, 'information_button'), url: CONFIG['INFORMATION_URL'] }]
                 ]
             }
         }
@@ -37,7 +37,7 @@ const start = (locale) => {
     return message;
 };
 
-const menu = (locale, user, message_id = null) => {
+const menu = (lang, user, message_id = null) => {
     const CONFIG = JSON.parse(fs.readFileSync('./config.json'));
 
     const message = {
@@ -47,30 +47,30 @@ const menu = (locale, user, message_id = null) => {
         extra: {}
     };
 
-    if (user.status === '3days') {
-        message.text = i18n.t(locale, 'menu3days_message', {
-            end_date: user.end_date
+    if (user.registrationStatus === '3days') {
+        message.text = i18n.t(lang, 'menu3days_message', {
+            end_date: user.subscription_end_date
         });
 
         inline_keyboard = [
-            [{ text: i18n.t(locale, 'buySub_button'), callback_data: 'buy-subscription' }],
-            [{ text: i18n.t(locale, 'changeTrialPeriod_button'), callback_data: 'change-trial' }],
-            [{ text: i18n.t(locale, 'information_button'), url: CONFIG['INFORMATION_URL'] }]
+            [{ text: i18n.t(lang, 'buySub_button'), callback_data: 'buy-subscription' }],
+            [{ text: i18n.t(lang, 'changeTrialPeriod_button'), callback_data: 'change-trial' }],
+            [{ text: i18n.t(lang, 'information_button'), url: CONFIG['INFORMATION_URL'] }]
         ];
     }
 
     return message;
 };
 
-const trial3days = (locale, message_id = null) => {
+const trial3days = (lang, message_id = null) => {
     const message = {
         type: (message_id) ? 'edit_text' : 'text',
         message_id,
-        text: i18n.t(locale, 'trial3days_message'),
+        text: i18n.t(lang, 'trial3days_message'),
         extra: {
             reply_markup: {
                 inline_keyboard: [
-                    [{ text: i18n.t(locale, 'start_button'), callback_data: '3days' }]
+                    [{ text: i18n.t(lang, 'start_button'), callback_data: '3days' }]
                 ]
             }
         }
@@ -79,7 +79,7 @@ const trial3days = (locale, message_id = null) => {
     return message;
 };
 
-const trial3daysSettings = (locale, step, data, message_id = null) => {
+const trial3daysSettings = (lang, step, data, message_id = null) => {
     const message = {
         type: (message_id) ? 'edit_text' : 'text',
         message_id,
@@ -88,9 +88,9 @@ const trial3daysSettings = (locale, step, data, message_id = null) => {
     };
 
     if (step === 0) {
-        message.text = i18n.t(locale, 'enterCurrency_message');
+        message.text = i18n.t(lang, 'enterCurrency_message');
     } else if (step === 1) {
-        message.text = i18n.t(locale, 'currencyIsCorrect_message', {
+        message.text = i18n.t(lang, 'currencyIsCorrect_message', {
             currency: data.currency
         });
     }
@@ -98,10 +98,10 @@ const trial3daysSettings = (locale, step, data, message_id = null) => {
     return message;
 };
 
-const subscribeChannels = (locale, channels) => {
+const subscribeChannels = (lang, channels) => {
     const message = {
         type: 'text',
-        text: i18n.t(locale, 'subscribeChannels_message'),
+        text: i18n.t(lang, 'subscribeChannels_message'),
         extra: {}
     };
     const inline_keyboard = channels.reduce((acc, el) => {
@@ -110,7 +110,7 @@ const subscribeChannels = (locale, channels) => {
     }, []);
 
     inline_keyboard[inline_keyboard.length] = [{
-        text: i18n.t(locale, 'checkSubscribe_button'),
+        text: i18n.t(lang, 'checkSubscribe_button'),
         callback_data: 'check-subscribe'
     }];
 
@@ -123,10 +123,10 @@ const subscribeChannels = (locale, channels) => {
     return message;
 };
 
-const remind = (locale, key) => {
+const remind = (lang, key) => {
     const message = {
         type: 'text',
-        text: i18n.t(locale, `${key}Remind_message`),
+        text: i18n.t(lang, `${key}Remind_message`),
         extra: {},
         delete: DELETE_DELAY
     };
@@ -134,14 +134,77 @@ const remind = (locale, key) => {
     return message;
 };
 
-const incorrectCurrency = (locale, currencies, message_id = null) => {
+const incorrectCurrency = (lang, currencies, message_id = null) => {
     const message = {
         type: (message_id) ? 'edit_text' : 'text',
         message_id,
-        text: i18n.t(locale, 'incorrectCurrency_message', {
+        text: i18n.t(lang, 'incorrectCurrency_message', {
             currencies
         }),
         extra: {}
+    };
+
+    return message;
+};
+
+const orderTextForUser = (lang, orderNo, response) => i18n.t(lang, 'orderTextForUser_text', {
+    orderNo,
+    response
+});
+
+const orderTextForAdmin = (lang, orderNo, host, username, delay, response) => i18n.t(lang, 'orderTextForUser_text', {
+    orderNo,
+    host,
+    username,
+    delay,
+    response
+});
+
+const order = (lang, status, botName, orderNo) => {
+    const message = {
+        type: 'text',
+        text: i18n.t(lang, 'order_message', {
+            status,
+            botName,
+            orderNo
+        }),
+        extra: {}
+    };
+
+    return message;
+};
+
+const orderCollapse = (lang, data) => {
+    const message = {
+        type: 'text',
+        text: i18n.t(lang, 'orderCollapse_message', {
+
+        }),
+        extra: {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: i18n.t(lang, 'expande_button'), callback_data: 'expande' }]
+                ]
+            }
+        }
+    };
+
+    return message;
+};
+
+const orderExpande = (lang, data) => {
+    const message = {
+        type: 'text',
+        text: i18n.t(lang, 'orderExpande_message', {
+            
+        }),
+        extra: {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: i18n.t(lang, 'collapse_button'), callback_data: 'collapse' }]
+                ]
+            }
+        }
     };
 
     return message;
@@ -154,5 +217,10 @@ module.exports = {
     trial3daysSettings,
     subscribeChannels,
     remind,
-    incorrectCurrency
+    incorrectCurrency,
+    orderTextForUser,
+    orderTextForAdmin,
+    order,
+    orderCollapse,
+    orderExpande
 }
