@@ -5,7 +5,7 @@ const {
     botDBService
 } = require('./db');
 
-class botDBService {
+class BotService {
     async createBot(creator, name) {
         const admins = await userDBService.getAll({ role: 'admin' });
         const assignedToUser = admins.map(admin => admin.tg_id);
@@ -181,4 +181,4 @@ class botDBService {
     }
 }
 
-module.exports = new botDBService();
+module.exports = new BotService();
