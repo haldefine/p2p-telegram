@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
+const BinanceService = require("./binance-service");
 
 class WebService {
     constructor() {
@@ -45,6 +46,7 @@ class WebService {
                 proxies,
                 orderKey: orderKey,
                 is_cookie: orderKey.isCookie,
+                currencyPrice: await BinanceService.getPrice(bot.fiat)
             }
         }
         const response = await this.sendRequest(request);
