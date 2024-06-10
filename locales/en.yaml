@@ -1,4 +1,4 @@
-start_message: '🎉 Welcome to the P2P Bot! Delighted to have you here! 🌟
+start_message: '${id}🎉 Welcome to the P2P Bot! Delighted to have you here! 🌟
 
 
 Unlock the full potential of your trading with our bot and experience the following advantages:
@@ -49,25 +49,32 @@ order_message: 'Status: ${status}
 Bot: ${botName}
 
 Order: ${orderNo}'
-orderCollapse_message: 'Есть 4 статуса ордеров (первая строка): 
-🟢 NEW ORDER - дефолтно для тех у кого доступ на 3 дня 
+orderCollapse_message: '${status}
 
-Подписка или 3 ордера 
-🟢 SUCCESS - ордер открыт 
-🔴 UNSUCCESS - ордер не открыт по одному из негативных response 
-🟡 inappropriate amount - ордер не открыт по лимитам 
+🤑 Diff:
 
-🤑 Diff: ${diff}
-📊 Rate: 3915
+📊 Rate: ${price}
+
 🌏 Fiat: ${fiat}
-💰 Taken: 5000000MMK'
-orderExpand_message: 'Coin: ${coin}
+
+💰 Taken: ${amounts}'
+orderExpand_message: '${status}
+
+🤑 Diff:
+
+📊 Rate: ${price}
+
+🌏 Fiat: ${fiat}
+
+💰 Taken: ${amounts}
+
+Coin: ${coin}
 
 Price: ${price}
 
 Total: ${totalAmount}
 
-Limit: ${minValue} - ${maxValue} ${fiat}
+Limit: ${minVolume} - ${maxVolume} ${fiat}
 
 Methods: ${methods}
 
@@ -108,5 +115,10 @@ checkSubscribe_button: 'I have subscribed'
 
 expande_button: 'Expande'
 collapse_button: 'Collapse'
+
+NEW_ORDER_status: '🟢 NEW ORDER'
+SUCCESS_status: '🟢 SUCCESS'
+UNSUCCESS_status: '🔴 UNSUCCESS'
+inappropriate_amount_status: '🟡 inappropriate amount'
 
 user_url: '<a href="tg://user?id=${id}">${username}</a>'

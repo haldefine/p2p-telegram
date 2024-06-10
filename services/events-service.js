@@ -124,6 +124,7 @@ class EventsService {
 
             const fullData = {
                 //result: t.order[result],
+                status: '',
                 price: order.price,
                 amounts: taken.join(`${bot.fiat}, `),
                 coin: bot.coin,
@@ -132,7 +133,7 @@ class EventsService {
                 minVolume: order.min_volume,
                 maxVolume: order.max_volume,
                 methods: ordersData[0]?.payMethods,
-                targetUser,
+                user: targetUser,
                 binanceUsername: ordersData[0]?.nickname,
                 dateTime: this.getTime(),
                 botName: bot.name,
