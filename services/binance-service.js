@@ -24,7 +24,8 @@ class BinanceService {
         };
 
         const res = await axios.request(config);
-        return res.data.data.map(fiat => fiat.currencyCode);
+        const fiats = res.data.data.map(fiat => fiat.currencyCode);
+        return fiats.filter(fiat => fiat !== 'UAH');
     }
 
     /**
