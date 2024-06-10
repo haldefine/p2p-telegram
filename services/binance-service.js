@@ -82,6 +82,27 @@ class BinanceService {
         return res.data.data.tradeMethods.map(m => m.identifier);
     }
 
+    /**
+     * Retrieves the price of a specific fiat currency from Binance's API.
+     *
+     * @param {string} fiat - The fiat currency to retrieve the price for.
+     * @return {Promise<number>} The price of the specified fiat currency.
+     */
+    async getPrice(fiat) {
+        const res = await axios.post('https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search', {
+            "fiat": fiat,
+            "page": 1,
+            "rows": 1,
+            "tradeType": "BUY",
+            "asset": "USDT"
+        }, {
+            maxBodyLength: Infinity,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+        })
+        return Number(res.data.data[0].adv.price);
+    }
 
     waitWhenFulfill(orderNo, api_key, secret_key, callback) {
         let lastStatus = 0;
