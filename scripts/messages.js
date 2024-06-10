@@ -177,9 +177,7 @@ const order = (lang, status, botName, orderNo) => {
 const orderCollapse = (lang, data) => {
     const message = {
         type: 'text',
-        text: i18n.t(lang, 'orderCollapse_message', {
-
-        }),
+        text: i18n.t(lang, 'orderCollapse_message', data),
         extra: {
             reply_markup: {
                 inline_keyboard: [
@@ -193,11 +191,14 @@ const orderCollapse = (lang, data) => {
 };
 
 const orderExpande = (lang, data) => {
+    data.user = i18n.t(lang, 'user_url', {
+        id: data.user.tg_id,
+        username: data.user.tg_username
+    });
+
     const message = {
         type: 'text',
-        text: i18n.t(lang, 'orderExpande_message', {
-            
-        }),
+        text: i18n.t(lang, 'orderExpande_message', data),
         extra: {
             reply_markup: {
                 inline_keyboard: [
