@@ -6,6 +6,66 @@ class BinanceService {
         throw new Error('Not implemented');
     }
 
+    async getFiatsList() {
+        let data = JSON.stringify({});
+
+        let config = {
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: 'https://p2p.binance.com/bapi/c2c/v1/friendly/c2c/trade-rule/fiat-list',
+            headers: {
+                'content-type': 'application/json'
+            },
+            data : data
+        };
+
+        const res = await axios.request(config);
+        return res.data.data.map(fiat => fiat.currencyCode);
+    }
+
+    async getCoin(fiat) {
+        let data = JSON.stringify({
+            "fiat": fiat
+        });
+
+        let config = {
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/portal/config',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            data : data
+        };
+
+        const res = await axios.request(config)
+        const p2pdata = res.data.data.areas.find(area => area.area === 'P2P');
+        const buySide = p2pdata.tradeSides.find(side => side.side === 'BUY');
+        // const payMethods = buySide.tradeMethods.map(method => method.identifier);
+        return buySide.assets.map(asset => asset.asset);
+    }
+
+
+    async getPayMethods(fiat) {
+        let data = JSON.stringify({
+            "fiat": fiat
+        });
+
+        let config = {
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: 'https://p2p.binance.com/bapi/c2c/v2/public/c2c/adv/filter-conditions',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            data : data
+        };
+
+        const res = await axios.request(config)
+        return res.data.data.tradeMethods.map(m => m.identifier);
+    }
+
+
     waitWhenFulfill(orderNo, api_key, secret_key, callback) {
         let lastStatus = 0;
 
