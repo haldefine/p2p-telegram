@@ -6,6 +6,10 @@ class BinanceService {
         throw new Error('Not implemented');
     }
 
+    /**
+     * Gets the list of fiats.
+     * @return {Promise<string[]>} An array of fiat currency codes
+     */
     async getFiatsList() {
         let data = JSON.stringify({});
 
@@ -23,7 +27,13 @@ class BinanceService {
         return res.data.data.map(fiat => fiat.currencyCode);
     }
 
-    async getCoin(fiat) {
+    /**
+     * Retrieves the coin information based on the provided fiat currency.
+     *
+     * @param {string} fiat - The fiat currency for which to retrieve the coin information.
+     * @return {Promise<string[]>} An array of assets representing the coins related to the specified fiat currency.
+     */
+    async getCoinsList(fiat) {
         let data = JSON.stringify({
             "fiat": fiat
         });
@@ -46,6 +56,12 @@ class BinanceService {
     }
 
 
+    /**
+     * Retrieves the payment methods available for a given fiat currency.
+     *
+     * @param {string} fiat - The fiat currency for which to retrieve the payment methods.
+     * @return {Promise<string[]>} An array of payment method identifiers.
+     */
     async getPayMethods(fiat) {
         let data = JSON.stringify({
             "fiat": fiat
