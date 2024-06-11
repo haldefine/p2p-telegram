@@ -104,6 +104,29 @@ class BinanceService {
         return Number(res.data.data[0].adv.price);
     }
 
+
+    /**
+     * Retrieves the user identifier from the Binance API using the provided API key and secret key.
+     *
+     * @param {string} api_key - The API key for authentication.
+     * @param {string} secret_key - The secret key for authentication.
+     * @return {Promise<string>} A promise that resolves to the user's full name retrieved from the API response.
+     */
+    async getUserIdentifier(api_key, secret_key) {
+        const res = await axios.request({
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: this.signUrl('https://api.binance.com/sapi/v1/c2c/user/baseDetail', secret_key),
+            headers: {
+                'X-MBX-APIKEY': api_key,
+                'Content-Type': 'application/json'
+            },
+            data: {}
+        });
+        return res.data.data.kycFullName;
+    }
+
+
     waitWhenFulfill(orderNo, api_key, secret_key, callback) {
         let lastStatus = 0;
 
