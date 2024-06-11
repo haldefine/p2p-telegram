@@ -113,7 +113,7 @@ class EventsService {
                             message
                         });
                     }
-                })().catch(console.log)
+                })()
             });
         }
 
@@ -140,7 +140,9 @@ class EventsService {
                 advNo: order.advNo,
                 delay: order.delay,
                 responses: user.role === 'admin' ?
-                    responsesTextAdmin : responsesTextUser
+                    responsesTextAdmin : responsesTextUser,
+                marketPrice: order.marketPrice,
+                diffPrice: order.marketPrice / order.price - 1
             };
             const message = messages.orderCollapse(user.lang, fullData);
 
