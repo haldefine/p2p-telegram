@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const defaultRole = 'REGISTRATION';
+const defaultRole = 'user';
 const defaultRegistrationStatus = '3orders';
 
 const MessageSchema = new Schema({
@@ -18,7 +18,7 @@ const MessageSchema = new Schema({
 
 const UserSchema = new Schema({
     tg_id: {
-        type: Number,
+        type: String,
         required: true,
         unique: true,
         index: true,
@@ -38,20 +38,25 @@ const UserSchema = new Schema({
         default: defaultRole,
     },
     isActive: {
-        type: Boolean
+        type: Boolean,
+        default: true
+    },
+    isAdmin: {
+        type: Boolean,
+        default: false
     },
     start_date: {
         type: Date,
         default: Date.now
     },
-    subscription_end_date: {
+    sub_end_date: {
         type: Date,
     },
     registrationStatus: {
         type: String,
         required: true,
         default: defaultRegistrationStatus,
-    }, // 3days || 3orders || subscription
+    }, // 3days || 3orders || subscription || free
     assignedBots: {
         type: [String],
         required: true,

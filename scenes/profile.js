@@ -11,8 +11,7 @@ const {
     botDBService
 } = require('../services/db');
 const BotService = require('../services/bot-service');
-
-const CURRENCIES_REG = /(UAH|RUB|USD)/g;
+const BinanceService = require('../services/binance-service');
 
 function start3daysTrial() {
     const trial_3days = new Scene('trial_3days');
@@ -47,9 +46,10 @@ function start3daysTrial() {
             message = null;
 
         if (step === 0) {
+            const currencies = await BinanceService.getFiatsList();
             const currency = text.toUpperCase();
 
-            if (CURRENCIES_REG.test(currency)) {
+            if (currencies.includes(currency)) {
                 isCorrect = true;
                 isLeave = true;
 
@@ -58,7 +58,15 @@ function start3daysTrial() {
 
                 clearTimeout(ctx.session.remindTimerId);
             } else {
-                message = messages.incorrectCurrency(user.lang, CURRENCIES_REG);
+                const similar = currencies.reduce((acc, el) => {
+                    if (el[0] === currency[0] && el[1] === currency[1]) {
+                        acc += el + '\n';
+                    }
+
+                    return acc;
+                }, '');
+
+                message = messages.incorrectCurrency(user.lang, similar);
             }
         }
 

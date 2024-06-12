@@ -27,6 +27,7 @@ interface OrderKey {
 }*/
 
 const ProxySchema = new Schema({
+    bot_id: String,
     isUse: Boolean,
     host: String,
     username: String,
@@ -112,7 +113,7 @@ const BotSchema = new Schema({
     targetPrice: {
         type: Number,
         required: true,
-        default: 1
+        default: 0.01 // если diff, то проценты 100 % - 1, 1 % - 0.01
     }, // юзер выбирает diff или price и задает значение, для 3days и 3orders diff от 1 процента
     colCreateOrders: {
         type: Number,
@@ -130,7 +131,7 @@ const BotSchema = new Schema({
         default: () => false
     }, // задает юзер Take Full bank orders
     assignedToUser: {
-        type: [Number],
+        type: [String],
         required: true
     }
 }, { versionKey: false });

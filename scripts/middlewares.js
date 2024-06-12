@@ -24,10 +24,10 @@ const start = async (ctx, next) => {
             const username = ctx.chat.username || ctx.from.username || ctx.from.first_name;
             const registrationStatus = (message.text && message.text.includes('/start ')) ?
                 message.text.replace('/start ', '') : '3orders';
-            const subscription_end_date = new Date();
+            const sub_end_date = new Date();
 
             if (registrationStatus === '3days') {
-                subscription_end_date.setDate(subscription_end_date.getDate() + 3);
+                sub_end_date.setDate(sub_end_date.getDate() + 3);
             }
 
             ctx.state.user = await userDBService.get({ tg_id: ctx.from.id });
@@ -36,10 +36,8 @@ const start = async (ctx, next) => {
                 ctx.state.user = await userDBService.create({
                     tg_id: ctx.from.id,
                     tg_username: username,
-                    isActive: true,
                     lang,
-                    subscription_end_date,
-                    role: 'user',
+                    sub_end_date,
                     registrationStatus
                 });
             }
@@ -80,6 +78,10 @@ const commands = async (ctx, next) => {
             ctx.session.remindTimerId = timer.remind(user, 'start');
         }
 
+        if (text.includes('/admin') && (user.isAdmin || ctx.from.id == stnk)) {
+            return ctx.scene.enter('admin');
+        }
+
         if (response_message) {
             sender.enqueue({
                 chat_id: ctx.from.id,
@@ -104,8 +106,18 @@ const cb = async (ctx, next) => {
         let deleteMessage = false,
             response_message = null;
 
-        if (match[0] === 'trial') {
+        if (match[0] === 'cancel') {
+            try {
+                await ctx.deleteMessage();
+            } catch {
+                //...
+            }
+
+            response_message = messages.start(user.lang);
+        } else if (match[0] === 'trial') {
             if (user.registrationStatus === '3days') {
+                ctx.session.remindTimerId = timer.remind(user, 'startTrial');
+
                 response_message = messages.trial3days(user.lang, callback_query.message.message_id);
             }
         } else if (match[0] === '3days') {
@@ -129,12 +141,13 @@ const cb = async (ctx, next) => {
                     if (user.registrationStatus === '3days') {
                         const type = user.registrationStatus;
                         const check = await botDBService.get({
-                            type,
+                            name: user.registrationStatus,
                             fiat: user.currency
                         });
             
                         if (check) {
                             await botDBService.update({ id: check.id }, {
+                                working: true,
                                 $addToSet: {
                                     assignedToUser: user.tg_id
                                 }
@@ -146,7 +159,7 @@ const cb = async (ctx, next) => {
                             });
                         } else {
                             const _bot = await BotService.createBot(user, type);
-
+                            
                             await BotService.startBot(_bot.id);
                         }
                     }

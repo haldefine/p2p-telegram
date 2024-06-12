@@ -16,7 +16,8 @@ class BotService {
 
         const bot = await botDBService.create({
             name,
-            assignedToUser
+            assignedToUser,
+            fiat: creator.currency
         });
 
         for (const admin of admins) {
@@ -42,12 +43,24 @@ class BotService {
         return bot;
     }
 
-    async startBot(botId, proxiesLimit = 1) {
+    async startBot(botId, proxy = { req: { isUse: false }, limit: 1 }) {
         const bot = await botDBService.get({ id: botId });
 
-        if (!bot) throw new Error("There's must be a bot");
+        //if (!bot) throw new Error("There's must be a bot");
 
-        const temp = await proxyDBService.getAll({ isUse: false }, {}, {}, proxiesLimit);
+        if (!bot) {
+            return null;
+        }
+
+        let changed = false,
+            isProxyUse = false,
+            temp = await proxyDBService.getAll(proxy.req, {}, {}, proxy.limit);
+
+        if (temp.length === 0) {
+            isProxyUse = true;
+            temp = await proxyDBService.getAll({}, {}, {}, proxy.limit);
+        }
+
         const proxies = [];
 
         for (let i = 0; i < temp.length; i++) {
@@ -56,24 +69,35 @@ class BotService {
                 username: temp[i].username,
                 password: temp[i].password
             };
-
-            await proxyDBService.update({ host: temp[i].host }, { isUse: true });
         }
 
         const response = await WebService.startBot(bot, proxies);
 
-        let changed = false;
-
         if (bot.working === false && (response === 'success' || response === 'This bot already started')) {
             changed = true;
+            isProxyUse = true;
             bot.working = true;
 
             await botDBService.update({ id: bot.id }, bot);
+        } else if (bot.working) {
+            isProxyUse = true;
+        }
+
+        if (isProxyUse) {
+            for (let i = 0; i < proxies.length; i++) {
+                const el = proxies[i];
+
+                await proxyDBService.update({ host: el.host }, {
+                    isUse: true,
+                    bot_id: bot.id
+                });
+            }
         }
 
         return {
             response,
-            changed
+            changed,
+            proxies
         };
     }
 
@@ -92,10 +116,43 @@ class BotService {
             await botDBService.update({ id: bot.id }, bot);
 
             changed = true;
+
+            await proxyDBService.updateAll({
+                isUse: true,
+                bot_id: bot.id
+            }, { isUse: false });
         }
 
         return {
             response,
+            changed
+        };
+    }
+
+    async updateBot(botId, data) {
+        const bot = await botDBService.get({ id: botId });
+
+        //if (!bot) throw new Error("There's must be a bot");
+
+        if (!bot) {
+            return null;
+        }
+
+        let changed = false;
+
+        if (data.key === 'remove user') {
+            bot.assignedToUser = bot.assignedToUser.filter(el => el !== data.user.tg_id);
+
+            if (bot.assignedToUser.length === 0) {
+                return await this.stopBot(bot.id);
+            } else {
+                changed = true;
+
+                await botDBService.update({ id: bot.id }, bot);
+            }
+        }
+
+        return {
             changed
         };
     }

@@ -1,4 +1,4 @@
-start_message: '${id}🎉 Welcome to the P2P Bot! Delighted to have you here! 🌟
+start_message: '🎉 Welcome to the P2P Bot! Delighted to have you here! 🌟
 
 
 Unlock the full potential of your trading with our bot and experience the following advantages:
@@ -13,7 +13,7 @@ Unlock the full potential of your trading with our bot and experience the follow
 
 menu3days_message: '🕒 You’re Currently on a Trial Period
 
-Your trial will end on ${end_date}
+Your trial will end on ${subEndDate}
 
 To continue enjoying full access to our bot’s features, consider purchasing a subscription. Unlock all the tools and services designed to enhance your trading experience.
 
@@ -35,10 +35,23 @@ currencyIsCorrect_message: '✅ Currency Selection Confirmed! You have chosen ${
 subscribeChannels_message: 'To continue enjoying our bot’s services, please subscribe to our channel. This will keep you updated with the latest features, tips, and important announcements.'
 
 startRemind_message: '🚀 Begin Your Experience Now! Dive into our platform’s features by selecting an option from the menu.'
+startTrialRemind_message: '🕒 Reminder: Start Your Free Trial!
+
+It looks like you haven’t started your trial period yet. Dive into the full capabilities of our service with a free trial and see how it can benefit your trading strategies.
+
+🚀 Activate Trial Now! Click the button below to begin and take full advantage of all our features without delay.
+
+Don’t miss out on the opportunity to enhance your experience! Let’s get started!'
 currencyRemind_message: '💹 Choose Your Currency Now! Please make your selection to continue enjoying our services tailored just for you.'
 subscribeRemind_message: '🔗 Subscribe to Start Your Trial Click the button below to subscribe and gain immediate access to the trial. This is where your enhanced trading journey begins!
 
 Don’t miss out on starting your trial with all the benefits. Subscribe now!'
+
+subIsEnd1DayRemind_message: '🚨 Final Day of Your Trial Period
+
+Just a heads up—your trial period ends tomorrow! Don’t miss out on continuous access to all the features you’ve been enjoying.
+
+🚀 Upgrade Now! Consider purchasing a subscription today to maintain your access and benefits without interruption.'
 
 incorrectCurrency_message: '⚠️ Incorrect Currency Entered. It looks like there might have been an error in the currency you entered.
 
@@ -51,7 +64,7 @@ Bot: ${botName}
 Order: ${orderNo}'
 orderCollapse_message: '${status}
 
-🤑 Diff:
+🤑 Diff: ${diffPrice}
 
 📊 Rate: ${price}
 
@@ -60,7 +73,7 @@ orderCollapse_message: '${status}
 💰 Taken: ${amounts}'
 orderExpand_message: '${status}
 
-🤑 Diff:
+🤑 Diff: ${diffPrice}
 
 📊 Rate: ${price}
 
@@ -103,6 +116,24 @@ delay: ${delay}
 
 response: ${response}'
 
+adminMenu_message: 'Admin menu'
+enterProxies_message: 'Enter list of proxies in format: <b>IP:PORT:login:pass</b>'
+proxiesIsAdded_message: 'Proxies is added'
+
+userStatus_message: '<b>${user}</b>
+
+Language: ${lang}
+
+Role: ${role}
+
+Status: ${registrationStatus}
+
+Sub end date: ${sub_end_date}
+
+Bots list: ${assignedBots}
+
+Binance User Ids: ${binanceUserIds}'
+
 startTrial_button: '🎉Start Your Free Trial!'
 buySub_button: '💸Buy subscription'
 information_button: '📖Information'
@@ -116,9 +147,15 @@ checkSubscribe_button: 'I have subscribed'
 expande_button: 'Expande'
 collapse_button: 'Collapse'
 
-NEW_ORDER_status: '🟢 NEW ORDER'
-SUCCESS_status: '🟢 SUCCESS'
-UNSUCCESS_status: '🔴 UNSUCCESS'
-inappropriate_amount_status: '🟡 inappropriate amount'
+addAdmin_button: 'Add admin'
+addProxies_button: 'Add proxies'
+
+back_button: 'Back'
+cancel_button: 'Cancel'
+
+new_status: '🟢 NEW ORDER'
+success_status: '🟢 SUCCESS'
+unsuccess_status: '🔴 UNSUCCESS'
+limits_status: '🟡 inappropriate amount'
 
 user_url: '<a href="tg://user?id=${id}">${username}</a>'

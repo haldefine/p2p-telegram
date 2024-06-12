@@ -58,7 +58,11 @@ class EventsService {
 
 
     async proceedOrder(bot, order, responses) {
-        const users = await userDBService.getAll({ tg_id: { $in: bot.assignedToUser }});
+        const users = await userDBService.getAll({
+            tg_id: {
+                $in: bot.assignedToUser
+            }
+        });
 
         let result = (order.isLimits) ?
             'limits' : 'unsuccess';
@@ -124,7 +128,7 @@ class EventsService {
 
             const fullData = {
                 //result: t.order[result],
-                status: '',
+                result,
                 price: order.price,
                 amounts: taken.join(`${bot.fiat}, `),
                 coin: bot.coin,

@@ -12,6 +12,7 @@ const rateLimit = require('telegraf-ratelimit');
 
 const middlewares = require('./scripts/middlewares');
 const messages = require('./scripts/messages');
+const timer = require('./scripts/timer');
 
 const {
     userDBService,
@@ -23,9 +24,11 @@ const EventsService = require('./services/events-service');
 const BinanceService = require('./services/binance-service');
 
 const profile = require('./scenes/profile');
+const admin = require('./scenes/admin');
 
 const stage = new Stage([
-    profile.start3daysTrial()
+    profile.start3daysTrial(),
+    admin.adminMenu()
 ]);
 
 const bot = new Telegraf(process.env.BOT_TOKEN, { handlerTimeout: 100 });
@@ -75,6 +78,9 @@ bot.telegram.getMe().then((botInfo) => {
 });
 
 sender.create(bot);
+
+timer.startBots();
+timer.checkSub();
 
 WebService.setEventHandler(EventsService.handleEvent);
 

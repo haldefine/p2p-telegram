@@ -100,8 +100,13 @@ class BinanceService {
             headers: {
                 'Content-Type': 'application/json'
             },
-        })
-        return Number(res.data.data[0].adv.price);
+        });
+
+        if (res.data && res.data.data[0]) {
+            return Number(res.data.data[0].adv.price);
+        } else {
+            return 0;
+        }
     }
 
 

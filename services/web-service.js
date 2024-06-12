@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
+
 const BinanceService = require("./binance-service");
 
 class WebService {
@@ -35,23 +36,27 @@ class WebService {
     }
 
     async startBot(bot, proxies) {
-        const orderKey = bot.order_keys.find(key => key.name === bot.use_order_key);
-
-        if (!orderKey) return `Can't find key for orders`;
-
         const request = {
             event: 'startBot',
             data: {
                 ...bot,
                 proxies,
-                orderKey: orderKey,
-                is_cookie: orderKey.isCookie,
                 currencyPrice: await BinanceService.getPrice(bot.fiat)
             }
+        };
+
+        if (bot.name !== '3days') {
+            const orderKey = bot.order_keys.find(key => key.name === bot.use_order_key);
+
+            if (!orderKey) return `Can't find key for orders`;
+
+            request.data.orderKey = orderKey;
+            request.data.is_cookie = orderKey.isCookie;
         }
+
         const response = await this.sendRequest(request);
 
-        return response.data
+        return response.data;
     }
 
     async stopBot(bot) {
