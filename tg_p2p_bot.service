@@ -5,7 +5,7 @@ After=network.target
 [Service]
 ExecStart=node bot.js
 ExecReload=node bot.js
-WorkingDirectory=/opt/tg_p2p_bot
+WorkingDirectory=/opt/p2p-telegram
 KillMode=process
 Restart=always
 RestartSec=5

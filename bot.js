@@ -84,5 +84,13 @@ timer.checkSub();
 
 WebService.setEventHandler(EventsService.handleEvent);
 
+(() => {
+    const fs = require('fs');
+
+    if (!fs.existsSync('./config.json')) {
+        fs.writeFileSync('./config.json', fs.readFileSync('./config_example.json'));
+    }
+})()
+
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
