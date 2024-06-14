@@ -27,6 +27,7 @@ const startBots = async () => {
 
     for (let i = 0; i < bots.length; i++) {
         const el = bots[i];
+        console.log(el)
         const proxy = {
             req: {
                 bot_id: el.id
@@ -34,9 +35,7 @@ const startBots = async () => {
             limit: 1
         };
 
-        const res = await BotService.startBot(el.id, proxy);
-
-        console.log(res)
+        //const res = await BotService.startBot(el.id, proxy);
     }
 
     return bots;
