@@ -14,6 +14,9 @@ class EventsService {
 
     async handleEvent(message) {
         const data = JSON.parse(message);
+
+        console.log('[handleEvent]', data);
+
         const bot = await botDBService.get({ id: data.botId });
 
         if (!bot) {
@@ -32,7 +35,6 @@ class EventsService {
             await this.proceedOrder(bot, order, responses);
         }
     }
-
 
     async proceedError(bot, data) {
         const temp = [
@@ -55,7 +57,6 @@ class EventsService {
             }
         }
     }
-
 
     async proceedOrder(bot, order, responses) {
         const users = await userDBService.getAll({
@@ -158,7 +159,6 @@ class EventsService {
             });
         }
     }
-
 
     getTime() {
         const now = new Date();
