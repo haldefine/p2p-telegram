@@ -34,6 +34,13 @@ const ProxySchema = new Schema({
     password: String
 }, { versionKey: false });
 
+const KeySchema = new Schema({
+    bot_id: [String],
+    isUse: Boolean,
+    api: String,
+    secret: String
+}, { versionKey: false });
+
 const BotSchema = new Schema({
     type: {
         type: String
@@ -137,9 +144,11 @@ const BotSchema = new Schema({
 }, { versionKey: false });
 
 const Proxy = mongoose.model('Proxy', ProxySchema);
+const Key = mongoose.model('Key', KeySchema);
 const Bot = mongoose.model('Bot', BotSchema);
 
 module.exports = {
     Proxy,
+    Key,
     Bot
 }

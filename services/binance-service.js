@@ -56,7 +56,6 @@ class BinanceService {
         return buySide.assets.map(asset => asset.asset);
     }
 
-
     /**
      * Retrieves the payment methods available for a given fiat currency.
      *
@@ -108,7 +107,6 @@ class BinanceService {
             return 0;
         }
     }
-
 
     /**
      * Retrieves the user identifier from the Binance API using the provided API key and secret key.

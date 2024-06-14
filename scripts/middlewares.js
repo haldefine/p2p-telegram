@@ -157,14 +157,17 @@ const cb = async (ctx, next) => {
                                     assignedBots: check.id
                                 }
                             });
+
+                            response_message = messages.menu(user.lang, user, callback_query.message.message_id);
                         } else {
                             const _bot = await BotService.createBot(user, type);
-                            
-                            await BotService.startBot(_bot.id);
+                            const res = await BotService.startBot(_bot.id);
+
+                            response_message = (res.isSuccess) ?
+                                messages.menu(user.lang, user, callback_query.message.message_id) :
+                                messages.botError(user.lang, _bot, res.response);
                         }
                     }
-
-                    response_message = messages.menu(user.lang, user, callback_query.message.message_id);
                 }
             }
         } else if (match[0] === 'expande' || match[0] === 'collapse') {

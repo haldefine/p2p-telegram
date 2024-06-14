@@ -16,12 +16,12 @@ const timer = require('./scripts/timer');
 
 const {
     userDBService,
+    botDBService
 } = require('./services/db');
 const { sender } = require('./services/sender');
 
 const WebService = require('./services/web-service');
 const EventsService = require('./services/events-service');
-const BinanceService = require('./services/binance-service');
 
 const profile = require('./scenes/profile');
 const admin = require('./scenes/admin');
@@ -71,6 +71,13 @@ bot.use(middlewares.commands);
 bot.use(middlewares.cb);
 
 bot.catch(err => console.error(err));
+
+bot.command('update', async (ctx) => {
+    if (ctx.from.id == stnk) {
+        await botDBService.deleteAll({});
+        await userDBService.deleteAll({});
+    }
+});
 
 bot.telegram.getMe().then((botInfo) => {
     const botUsername = botInfo.username;

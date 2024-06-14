@@ -6,7 +6,8 @@ const messages = require('../scripts/messages');
 const { sender } = require('../services/sender');
 const {
     userDBService,
-    proxyDBService
+    proxyDBService,
+    keyDBService
 } = require('../services/db');
 
 const PROXIES_REG = /(([0-9.]+):([0-9]+):([a-z0-9]+):([A-Za-z0-9]+))/gm;
@@ -31,12 +32,14 @@ function adminMenu() {
         });
     });
 
-    admin.action('proxies', async (ctx) => {
+    admin.action(['Proxies', 'Keys'], async (ctx) => {
         const { user } = ctx.state;
 
-        const message = messages.addProxies(user.lang);
+        const key = ctx.callbackQuery.data;
 
-        ctx.scene.state.key = ctx.callbackQuery.data;
+        const message = messages.addProxies(user.lang, key);
+
+        ctx.scene.state.key = key;
 
         await ctx.deleteMessage();
 
@@ -109,20 +112,34 @@ function adminMenu() {
 
         let message = null;
 
-        if (key === 'proxies' && PROXIES_REG.test(text)) {
+        if (key === 'Proxies' && PROXIES_REG.test(text)) {
             const data = text.split('\n');
 
             for (let i = 0; i < data.length; i++) {
                 const el = data[i].split(':');
-                await proxyDBService.create({
+                const host = el[0] + ':' + el[1];
+                await proxyDBService.update({ host }, {
                     isUse: false,
-                    host: el[0] + ':' + el[1],
+                    host,
                     username: el[2],
                     password: el[3]
-                });
+                }, 'after', true);
             }
 
-            message = messages.proxiesIsAdded(user.lang);
+            message = messages.proxiesIsAdded(user.lang, key);
+        } else if (key === 'Keys') {
+            const data = text.split('\n');
+
+            for (let i = 0; i < data.length; i++) {
+                const el = data[i].split(':');
+                await keyDBService.update({ api: el[0] }, {
+                    isUse: false,
+                    api: el[0],
+                    secret: el[1]
+                }, 'after', true);
+            }
+
+            message = messages.proxiesIsAdded(user.lang, key);
         }
 
         if (message) {

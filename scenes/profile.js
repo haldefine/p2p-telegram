@@ -7,10 +7,8 @@ const timer = require('../scripts/timer');
 
 const { sender } = require('../services/sender');
 const {
-    userDBService,
-    botDBService
+    userDBService
 } = require('../services/db');
-const BotService = require('../services/bot-service');
 const BinanceService = require('../services/binance-service');
 
 function start3daysTrial() {
@@ -50,13 +48,19 @@ function start3daysTrial() {
             const currency = text.toUpperCase();
 
             if (currencies.includes(currency)) {
-                isCorrect = true;
-                isLeave = true;
+                const check = await BinanceService.getPrice(currency);
 
-                ctx.scene.state.step++;
-                ctx.scene.state.data.currency = currency;
+                if (check) {
+                    isCorrect = true;
+                    isLeave = true;
 
-                clearTimeout(ctx.session.remindTimerId);
+                    ctx.scene.state.step++;
+                    ctx.scene.state.data.currency = currency;
+
+                    clearTimeout(ctx.session.remindTimerId);
+                } else {
+                    message = messages.marketIsTooSmall(user.lang);
+                }
             } else {
                 const similar = currencies.reduce((acc, el) => {
                     if (el[0] === currency[0] && el[1] === currency[1]) {

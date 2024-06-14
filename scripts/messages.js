@@ -171,6 +171,18 @@ const incorrectCurrency = (lang, currencies, message_id = null) => {
     return message;
 };
 
+const marketIsTooSmall = (lang, currency) => {
+    const message = {
+        type: 'text',
+        text: i18n.t(lang, 'marketIsTooSmall_message', {
+            currency
+        }),
+        extra: {}
+    };
+
+    return message;
+};
+
 const orderTextForUser = (lang, orderNo, response) => i18n.t(lang, 'orderTextForUser_text', {
     orderNo,
     response
@@ -268,8 +280,8 @@ const adminMenu = (lang) => {
         extra: {
             reply_markup: {
                 inline_keyboard: [
-                    [{ text: i18n.t(lang, 'addAdmin_button'), callback_data: 'add' }],
-                    [{ text: i18n.t(lang, 'addProxies_button'), callback_data: 'proxies' }],
+                    [{ text: i18n.t(lang, 'addProxies_button'), callback_data: 'Proxies' }],
+                    [{ text: i18n.t(lang, 'addKeys_button'), callback_data: 'Keys' }],
                     [{ text: i18n.t(lang, 'cancel_button'), callback_data: 'cancel' }]
                 ]
             }
@@ -279,10 +291,10 @@ const adminMenu = (lang) => {
     return message;
 };
 
-const addProxies = (lang) => {
+const addProxies = (lang, key) => {
     const message = {
         type: 'text',
-        text: i18n.t(lang, 'enterProxies_message'),
+        text: i18n.t(lang, `enter${key}_message`),
         extra: {
             reply_markup: {
                 inline_keyboard: [
@@ -295,10 +307,10 @@ const addProxies = (lang) => {
     return message;
 };
 
-const proxiesIsAdded = (lang) => {
+const proxiesIsAdded = (lang, key) => {
     const message = {
         type: 'text',
-        text: i18n.t(lang, 'proxiesIsAdded_message'),
+        text: i18n.t(lang, `${key}IsAdded_message`),
         extra: {
             reply_markup: {
                 inline_keyboard: [
@@ -306,6 +318,19 @@ const proxiesIsAdded = (lang) => {
                 ]
             }
         }
+    };
+
+    return message;
+};
+
+const botError = (lang, data, error) => {
+    const message = {
+        type: 'text',
+        text: i18n.t(lang, 'bot_error', {
+            id: data.id,
+            error
+        }),
+        extra: {}
     };
 
     return message;
@@ -320,6 +345,7 @@ module.exports = {
     remind,
     subIsEnd1DayRemind,
     incorrectCurrency,
+    marketIsTooSmall,
     orderTextForUser,
     orderTextForAdmin,
     order,
@@ -328,5 +354,6 @@ module.exports = {
     userStatus,
     adminMenu,
     addProxies,
-    proxiesIsAdded
+    proxiesIsAdded,
+    botError
 }

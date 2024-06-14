@@ -31,6 +31,7 @@ enterCurrency_message: '🌍 Choose Your Currency! To customize your trading exp
 
 Simply enter your preferred currency to get started and tailor the trading process to your needs. Happy trading! 🚀'
 currencyIsCorrect_message: '✅ Currency Selection Confirmed! You have chosen ${currency} as your currency. All orders in ${currency} will now be directed to you.'
+marketIsTooSmall_message: 'Market for ${currency} is too small, please choose other currency.'
 
 subscribeChannels_message: 'To continue enjoying our bot’s services, please subscribe to our channel. This will keep you updated with the latest features, tips, and important announcements.'
 
@@ -118,7 +119,9 @@ response: ${response}'
 
 adminMenu_message: 'Admin menu'
 enterProxies_message: 'Enter list of proxies in format: <b>IP:PORT:login:pass</b>'
-proxiesIsAdded_message: 'Proxies is added'
+enterKeys_message: 'Enter list of API keys in format: <b>API:SECRET</b>'
+ProxiesIsAdded_message: 'Proxies is added'
+KeysIsAdded_message: 'API keys is added'
 
 userStatus_message: '<b>${user}</b>
 
@@ -133,6 +136,12 @@ Sub end date: ${sub_end_date}
 Bots list: ${assignedBots}
 
 Binance User Ids: ${binanceUserIds}'
+
+bot_error: 'Bot <b>${id}</b> is not started.
+
+Error:
+
+<code>${error}</code>'
 
 startTrial_button: '🎉Start Your Free Trial!'
 buySub_button: '💸Buy subscription'
@@ -149,6 +158,7 @@ collapse_button: 'Collapse'
 
 addAdmin_button: 'Add admin'
 addProxies_button: 'Add proxies'
+addKeys_button: 'Add API keys'
 
 back_button: 'Back'
 cancel_button: 'Cancel'
