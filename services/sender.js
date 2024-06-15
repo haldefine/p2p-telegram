@@ -235,13 +235,24 @@ class Sender extends Queue {
         } catch (error) {
             const response = (error.response) ? error.response : error;
 
+            const modified_errors = [
+                'Bad Request: message is not modified:',
+                'Bad Request: message to edit not found'
+            ];
+            const parse_errors = [
+                "Bad Request: can't parse entities:"
+            ];
+            const block_errors = [
+                'Forbidden: bot was blocked by the user',
+                "Forbidden: bot can't initiate conversation with a user",
+                'Forbidden: user is deactivated'
+            ];
+
             console.log(message);
 
             console.log('[Sender]', response);
 
-            if (response.description &&
-                response.description.includes('Bad Request: message is not modified:')
-            ) {
+            if (response.description && modified_errors.includes(response.description)) {
                 const temp = {
                     type: 'text',
                     text: message.text,
@@ -249,23 +260,18 @@ class Sender extends Queue {
                 };
 
                 return this.sendMessage(chatId, temp);
-            } else if (response.description &&
-                response.description.includes("Bad Request: can't parse entities:")
-                ) {
-                    const temp = {
-                        type: message.type,
-                        text: message.text.replace(/([<>\/])/g, ''),
-                        extra: {}
-                    };
+            } else if (response.description && parse_errors.includes(response.description)) {
+                const temp = {
+                    type: message.type,
+                    text: message.text.replace(/([<>\/])/g, ''),
+                    extra: {}
+                };
 
-                    return this.sendMessage(chatId, temp);
-            } else if (response.description &&
-                (response.description === 'Forbidden: bot was blocked by the user' ||
-                response.description === "Forbidden: bot can't initiate conversation with a user" ||
-                response.description === 'Forbidden: user is deactivated')) {
-                    return await userDBService.update({ tg_id: chatId }, {
-                        isActive: false
-                    });
+                return this.sendMessage(chatId, temp);
+            } else if (response.description && block_errors.includes(response.description)) {
+                return await userDBService.update({ tg_id: chatId }, {
+                    isActive: false
+                });
             } else {
                 return null;
             }

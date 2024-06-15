@@ -134,8 +134,14 @@ const remind = (lang, key) => {
     const message = {
         type: 'text',
         text: i18n.t(lang, `${key}Remind_message`),
-        extra: {},
-        delete: DELETE_DELAY
+        extra: {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: i18n.t(lang, 'proceed_button'), callback_data: 'proceed' }]
+                ]
+            }
+        },
+        //delete: DELETE_DELAY
     };
 
     return message;
@@ -163,9 +169,17 @@ const incorrectCurrency = (lang, currencies, message_id = null) => {
         type: (message_id) ? 'edit_text' : 'text',
         message_id,
         text: i18n.t(lang, 'incorrectCurrency_message', {
-            currencies
+            currencies: currencies.join(',')
         }),
-        extra: {}
+        extra: {
+            reply_markup: {
+                inline_keyboard: currencies.reduce((acc, el) => {
+                    acc[acc.length] = [{ text: el, callback_data: `set-${el}` }];
+
+                    return acc;
+                }, [])
+            }
+        }
     };
 
     return message;

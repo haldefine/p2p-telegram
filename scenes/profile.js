@@ -11,6 +11,23 @@ const {
 } = require('../services/db');
 const BinanceService = require('../services/binance-service');
 
+const trialLeave = async (ctx) => {
+    const { user } = ctx.state;
+
+    const channels = await helper.getChannels();
+
+    await userDBService.update({ tg_id: user.tg_id }, ctx.scene.state.data);
+
+    sender.enqueue({
+        chat_id: user.tg_id,
+        message: messages.subscribeChannels(user.lang, channels)
+    });
+
+    ctx.session.remindTimerId = timer.remind(user, 'subscribe');
+
+    return await ctx.scene.leave();
+};
+
 function start3daysTrial() {
     const trial_3days = new Scene('trial_3days');
 
@@ -32,6 +49,25 @@ function start3daysTrial() {
             chat_id: ctx.from.id,
             message
         });
+    });
+
+    trial_3days.action(/set-([A-Z]+)/, async (ctx) => {
+        const { user } = ctx.state;
+        const data = ctx.match[1];
+
+        ctx.scene.state.step++;
+        ctx.scene.state.data.currency = data;
+
+        clearTimeout(ctx.session.remindTimerId);
+
+        await ctx.deleteMessage();
+
+        sender.enqueue({
+            chat_id: ctx.from.id,
+            message: messages.trial3daysSettings(user.lang, ctx.scene.state.step, ctx.scene.state.data)
+        });
+
+        trialLeave(ctx);
     });
 
     trial_3days.on('text', async (ctx) => {
@@ -64,11 +100,11 @@ function start3daysTrial() {
             } else {
                 const similar = currencies.reduce((acc, el) => {
                     if (el[0] === currency[0] && el[1] === currency[1]) {
-                        acc += el + '\n';
+                        acc[acc.length] = el;
                     }
 
                     return acc;
-                }, '');
+                }, []);
 
                 message = messages.incorrectCurrency(user.lang, similar);
             }
@@ -79,22 +115,14 @@ function start3daysTrial() {
         }
 
         if (message) {
-            await ctx.replyWithHTML(message.text, message.extra);
+            sender.enqueue({
+                chat_id: ctx.from.id,
+                message
+            });
         }
 
         if (isLeave) {
-            const channels = await helper.getChannels();
-
-            await userDBService.update({ tg_id: user.tg_id }, ctx.scene.state.data);
-
-            sender.enqueue({
-                chat_id: user.tg_id,
-                message: messages.subscribeChannels(user.lang, channels)
-            });
-
-            ctx.session.remindTimerId = timer.remind(user, 'subscribe');
-
-            await ctx.scene.leave();
+            trialLeave(ctx);
         }
     });
 
