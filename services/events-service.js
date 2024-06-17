@@ -13,26 +13,28 @@ class EventsService {
     }
 
     async handleEvent(message) {
-        const data = JSON.parse(message);
+        const data = (message && typeof message === 'string') ? JSON.parse(message) : message;
 
         console.log('[handleEvent]', data);
 
-        const bot = await botDBService.get({ id: data.botId });
+        if (data && data.botId) {
+            const bot = await botDBService.get({ id: data.botId });
 
-        if (!bot) {
-            console.log(`Can't find bot`, data);
-            return null;
-        }
+            if (!bot) {
+                console.log(`Can't find bot`, data);
+                return null;
+            }
 
-        if (data.error) {
-            await this.proceedError(bot, data);
-        }
+            if (data.error) {
+                await this.proceedError(bot, data);
+            }
 
-        if (data.order && data.responses) {
-            const order = JSON.parse(data.order);
-            const responses = JSON.parse(data.responses);
+            if (data.order && data.responses) {
+                const order = JSON.parse(data.order);
+                const responses = JSON.parse(data.responses);
 
-            await this.proceedOrder(bot, order, responses);
+                await this.proceedOrder(bot, order, responses);
+            }
         }
     }
 

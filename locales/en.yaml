@@ -39,7 +39,11 @@ To customize your trading experience, please select the currency in which you wo
 Simply enter your preferred currency to get started and tailor the trading process to your needs. Happy trading! 🚀'
 currencyIsCorrect_message: '<b>✅ Currency Selection Confirmed!</b>
 
-You have chosen <b>${currency}</b> as your currency. All orders in <b>${currency}</b> will now be directed to you.'
+
+You have chosen ${currency} as your currency. All orders in ${currency} will now be directed to you.
+
+
+<b>Attention</b>: the number of orders per day depends on market activity. You just have to wait for new notifications.'
 marketIsTooSmall_message: 'Market for <b>${currency}</b> is too small, please choose other currency.'
 
 subscribeChannels_message: 'To continue enjoying our bot’s services, please subscribe to our channel. This will keep you updated with the latest features, tips, and important announcements.'

@@ -52,8 +52,6 @@ const start = async (ctx, next) => {
                         lang
                     }, 'after');
             }
-
-            clearTimeout(ctx.session.remindTimerId);
         } catch (error) {
             //...
         }
@@ -110,6 +108,10 @@ const cb = async (ctx, next) => {
         let deleteMessage = false,
             response_message = null;
 
+        if (match[0] !== 'proceed') {
+            sender.deleteMessage(ctx.from.id, user.last_message_id);
+        }
+
         if (match[0] === 'cancel' || match[0] === 'proceed') {
             sender.deleteMessage(ctx.from.id, message_id);
 
@@ -117,6 +119,8 @@ const cb = async (ctx, next) => {
                 response_message = messages.start(user.lang);
             }
         } else if (match[0] === 'trial') {
+            clearTimeout(ctx.session.remindTimerId);
+
             if (user.registrationStatus === '3days') {
                 ctx.session.remindTimerId = timer.remind(user, 'startTrial');
 
@@ -140,6 +144,8 @@ const cb = async (ctx, next) => {
                 const subscriber = await helper.checkSubscribe(channels, ctx.from.id);
 
                 if (subscriber.isMember) {
+                    clearTimeout(ctx.session.remindTimerId);
+
                     if (user.registrationStatus === '3days') {
                         const type = user.registrationStatus;
                         const check = await botDBService.get({
@@ -173,7 +179,7 @@ const cb = async (ctx, next) => {
                         }
                     }
                 } else {
-                    await ctx.answerCbQuery(ctx.i18n.t('youNotSubscribeToChannel_message'));
+                    await ctx.answerCbQuery(ctx.i18n.t('youNotSubscribeToChannel_message'), true);
                 }
             }
         } else if (match[0] === 'expande' || match[0] === 'collapse') {
@@ -189,8 +195,6 @@ const cb = async (ctx, next) => {
             if (deleteMessage) {
                 await ctx.deleteMessage();
             }
-
-            clearTimeout(ctx.session.remindTimerId);
 
             sender.enqueue({
                 chat_id: ctx.from.id,

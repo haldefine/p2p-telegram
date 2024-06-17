@@ -8,7 +8,7 @@ const {
 
 const BotService = require('../services/bot-service');
 
-const REMIND_DELAY = 60000; // 7200000;
+const REMIND_DELAY = 7200000;
 
 const remind = (user, key, delay = REMIND_DELAY) => setTimeout((user) => {
     sender.enqueue({

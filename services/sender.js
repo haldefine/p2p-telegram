@@ -35,6 +35,12 @@ class Sender extends Queue {
                 setTimeout(() => this.deleteMessage(chat_id, res.message_id), message.delete);
             }
 
+            if (message.deleteAfterAction) {
+                await userDBService.update({ tg_id: chat_id }, {
+                    last_message_id: res.message_id
+                });
+            }
+
             if (message.expande) {
                 await messageDBService.create({
                     chat_id: chat_id,
@@ -67,7 +73,7 @@ class Sender extends Queue {
                 only_if_banned: true
             });
         } catch (error) {
-            console.log('[Sender]', error.response);
+            console.log('[unbanUser]', error.response);
 
             return null;
         }
@@ -77,7 +83,7 @@ class Sender extends Queue {
         try {
             return await this.bot.telegram.banChatMember(chatId, user.tg_id);
         } catch (error) {
-            console.log('[Sender]', error.response);
+            console.log('[banUser]', error.response);
 
             return null;
         }
@@ -87,7 +93,7 @@ class Sender extends Queue {
         try {
             return await this.bot.telegram.deleteMessage(id, message_id);
         } catch (error) {
-            console.log('[Sender]', error.response);
+            console.log('[deleteMessage]', id);
 
             return null;
         }
@@ -100,7 +106,7 @@ class Sender extends Queue {
                 message_ids
             });
         } catch (error) {
-            console.log('[Sender]', error.response);
+            console.log('[deleteMessages]', error.response);
 
             return null;
         }
@@ -112,7 +118,7 @@ class Sender extends Queue {
                 chat_id,
             });
         } catch (error) {
-            console.log('[Sender]', error.response);
+            console.log('[getChat]', error.response);
 
             return null;
         }
@@ -125,7 +131,7 @@ class Sender extends Queue {
                 user_id
             });
         } catch (error) {
-            console.log('[Sender]', error.response);
+            console.log('[getChatMember]', error.response);
 
             return null;
         }
@@ -250,7 +256,7 @@ class Sender extends Queue {
 
             console.log(message);
 
-            console.log('[Sender]', response);
+            console.log('[sendMessage]', response);
 
             if (response.description && modified_errors.includes(response.description)) {
                 const temp = {

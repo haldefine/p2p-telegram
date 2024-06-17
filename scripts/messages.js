@@ -141,6 +141,7 @@ const remind = (lang, key) => {
                 ]
             }
         },
+        deleteAfterAction: true
         //delete: DELETE_DELAY
     };
 

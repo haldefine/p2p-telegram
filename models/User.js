@@ -62,11 +62,14 @@ const UserSchema = new Schema({
         required: true,
         default: []
     },
+    binanceUserIds: {
+        type: [String]
+    },
     currency: {
         type: String
     },
-    binanceUserIds: {
-        type: [String]
+    last_message_id: {
+        type: String
     }
 }, { versionKey: false });
 

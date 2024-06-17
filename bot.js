@@ -76,6 +76,8 @@ bot.command('update', async (ctx) => {
     if (ctx.from.id == stnk) {
         await botDBService.deleteAll({});
         await userDBService.deleteAll({});
+
+        await ctx.replyWithHTML('Done!');
     }
 });
 
