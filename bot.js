@@ -103,7 +103,7 @@ sender.create(bot);
 
 timer.checkSub();
 
-WebService.setEventHandler(EventsService.handleEvent);
+WebService.setEventHandler(EventsService.handleEvent.bind(EventsService));
 
 (() => {
     const fs = require('fs');

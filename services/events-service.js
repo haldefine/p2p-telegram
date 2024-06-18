@@ -53,8 +53,9 @@ class EventsService {
             this.lastErrorTime = Date.now();
 
             for (const userId of bot.assignedToUser) {
-                await teact.sendMessage(userId, `Bot: ${bot.name}\nError: ${data.error}`, {
-                    disable_web_page_preview: true,
+                sender.enqueue({
+                    chat_id: userId,
+                    message: messages.botError('en', bot, data.error)
                 });
             }
         }
