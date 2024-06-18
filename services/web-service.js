@@ -59,6 +59,9 @@ class WebService {
 
             request.data.orderKey = orderKey;
             request.data.is_cookie = orderKey.isCookie;
+        } else {
+            request.data.orderKey = [];
+            request.data.is_cookie = false;
         }
 
         const response = await this.sendRequest(request);
