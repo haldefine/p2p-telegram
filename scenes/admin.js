@@ -59,6 +59,8 @@ function adminMenu() {
 
         await ctx.deleteMessage();
 
+        await ctx.replyWithHTML('Done!');
+
         sender.enqueue({
             chat_id: ctx.from.id,
             message
