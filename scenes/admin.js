@@ -2,6 +2,7 @@ const Scene = require('telegraf/scenes/base');
 
 const middlewares = require('../scripts/middlewares');
 const messages = require('../scripts/messages');
+const timer = require('../scripts/timer');
 
 const { sender } = require('../services/sender');
 const {
@@ -40,6 +41,21 @@ function adminMenu() {
         const message = messages.addProxies(user.lang, key);
 
         ctx.scene.state.key = key;
+
+        await ctx.deleteMessage();
+
+        sender.enqueue({
+            chat_id: ctx.from.id,
+            message
+        });
+    });
+
+    admin.action('startBots', async (ctx) => {
+        const { user } = ctx.state;
+
+        const message = messages.adminMenu(user.lang);
+
+        timer.startBots();
 
         await ctx.deleteMessage();
 

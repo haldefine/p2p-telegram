@@ -297,6 +297,7 @@ const adminMenu = (lang) => {
                 inline_keyboard: [
                     [{ text: i18n.t(lang, 'addProxies_button'), callback_data: 'Proxies' }],
                     [{ text: i18n.t(lang, 'addKeys_button'), callback_data: 'Keys' }],
+                    [{ text: i18n.t(lang, 'startBots_button'), callback_data: 'startBots' }],
                     [{ text: i18n.t(lang, 'cancel_button'), callback_data: 'cancel' }]
                 ]
             }

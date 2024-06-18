@@ -16,7 +16,9 @@ const timer = require('./scripts/timer');
 
 const {
     userDBService,
-    botDBService
+    botDBService,
+    keyDBService,
+    proxyDBService
 } = require('./services/db');
 const { sender } = require('./services/sender');
 
@@ -72,10 +74,21 @@ bot.use(middlewares.cb);
 
 bot.catch(err => console.error(err));
 
-bot.command('update', async (ctx) => {
+bot.hears(/clear (users|bots|keys|proxies)/, async (ctx) => {
     if (ctx.from.id == stnk) {
-        await botDBService.deleteAll({});
-        await userDBService.deleteAll({});
+        const key = ctx.match[1];
+
+        console.log(key)
+
+        if (key === 'users') {
+            await userDBService.deleteAll({});
+        } else if (key === 'bots') {
+            await botDBService.deleteAll({});
+        } else if (key === 'keys') {
+            await keyDBService.deleteAll({});
+        } else if (key === 'proxies') {
+            await proxyDBService.deleteAll({});
+        }
 
         await ctx.replyWithHTML('Done!');
     }
@@ -88,7 +101,6 @@ bot.telegram.getMe().then((botInfo) => {
 
 sender.create(bot);
 
-timer.startBots();
 timer.checkSub();
 
 WebService.setEventHandler(EventsService.handleEvent);

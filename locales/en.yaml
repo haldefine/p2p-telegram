@@ -179,6 +179,7 @@ collapse_button: 'Collapse'
 addAdmin_button: 'Add admin'
 addProxies_button: 'Add proxies'
 addKeys_button: 'Add API keys'
+startBots_button: 'Start bots'
 
 proceed_button: 'Proceed'
 back_button: 'Back'
