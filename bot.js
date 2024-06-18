@@ -94,6 +94,37 @@ bot.hears(/clear (users|bots|keys|proxies)/, async (ctx) => {
     }
 });
 
+bot.command('test', async (ctx) => {
+    const message = {
+        type: 'text',
+        text: '123',
+        extra: {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: ctx.i18n.t('expand_button'), callback_data: 'expand' }]
+                ]
+            }
+        }
+    };
+    const expand = {
+        type: 'text',
+        text: 'expand',
+        extra: {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: ctx.i18n.t('collapse_button'), callback_data: 'collapse' }]
+                ]
+            }
+        }
+    };
+    sender.enqueue({
+        chat_id: ctx.from.id,
+        message,
+        expand,
+        collapse: message
+    });
+});
+
 bot.telegram.getMe().then((botInfo) => {
     const botUsername = botInfo.username;
     console.log(`Username: @${botUsername}`);

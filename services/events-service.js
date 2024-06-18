@@ -132,7 +132,7 @@ class EventsService {
 
             const fullData = {
                 //result: t.order[result],
-                result,
+                result: (user.registrationStatus === '3days') ? 'new' : result,
                 price: order.price,
                 amounts: taken.join(`${bot.fiat}, `),
                 coin: bot.coin,
@@ -157,7 +157,7 @@ class EventsService {
             sender.enqueue({
                 chat_id: user.tg_id,
                 message,
-                expande: messages.orderExpande(user.lang, fullData),
+                expand: messages.orderExpand(user.lang, fullData),
                 collapse: message
             });
         }

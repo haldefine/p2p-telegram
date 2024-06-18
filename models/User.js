@@ -8,6 +8,9 @@ const MessageSchema = new Schema({
     chat_id: {
         type: String
     },
+    type: {
+        type: String
+    },
     message_id: {
         type: String
     },

@@ -185,13 +185,16 @@ const cb = async (ctx, next) => {
                     await ctx.answerCbQuery(ctx.i18n.t('youNotSubscribeToChannel_message'), true);
                 }
             }
-        } else if (match[0] === 'expande' || match[0] === 'collapse') {
-            const { message } = await messageDBService.get({
+        } else if (match[0] === 'expand' || match[0] === 'collapse') {
+            const data = await messageDBService.get({
                 chat_id: ctx.from.id,
+                type: match[0],
                 message_id
             });
 
-            response_message = message;
+            if (data) {
+                response_message = data.message;
+            }
         }
 
         if (response_message) {

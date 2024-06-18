@@ -25,7 +25,12 @@ class Sender extends Queue {
 
     async start() {
         if (this.storage[this.count - 1]) {
-            const { chat_id, message } = this.storage[this.count - 1];
+            const {
+                chat_id,
+                message,
+                expand,
+                collapse
+            } = this.storage[this.count - 1];
 
             this.dequeue();
 
@@ -41,19 +46,27 @@ class Sender extends Queue {
                 });
             }
 
-            if (message.expande) {
+            if (expand) {
+                expand.type = 'edit_text';
+                expand.message_id = res.message_id;
+
                 await messageDBService.create({
                     chat_id: chat_id,
+                    type: 'expand',
                     message_id: res.message_id,
-                    message: message.expande
+                    message: expand
                 });
             }
 
-            if (message.collapse) {
+            if (collapse) {
+                collapse.type = 'edit_text';
+                collapse.message_id = res.message_id;
+
                 await messageDBService.create({
                     chat_id: chat_id,
+                    type: 'collapse',
                     message_id: res.message_id,
-                    message: message.collapse
+                    message: collapse
                 });
             }
 

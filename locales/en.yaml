@@ -173,7 +173,7 @@ start_button: 'Start'
 
 checkSubscribe_button: 'I have subscribed'
 
-expande_button: 'Expande'
+expand_button: 'Expand'
 collapse_button: 'Collapse'
 
 addAdmin_button: 'Add admin'

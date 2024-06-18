@@ -235,7 +235,7 @@ const orderCollapse = (lang, data) => {
         extra: {
             reply_markup: {
                 inline_keyboard: [
-                    [{ text: i18n.t(lang, 'expande_button'), callback_data: 'expande' }]
+                    [{ text: i18n.t(lang, 'expand_button'), callback_data: 'expand' }]
                 ]
             }
         }
@@ -244,10 +244,10 @@ const orderCollapse = (lang, data) => {
     return message;
 };
 
-const orderExpande = (lang, data) => {
+const orderExpand = (lang, data) => {
     const message = {
         type: 'text',
-        text: i18n.t(lang, 'orderExpande_message', {
+        text: i18n.t(lang, 'orderExpand_message', {
             status: i18n.t(lang, `${data.result}_status`),
             user: i18n.t(lang, 'user_url', {
                 id: data.user.tg_id,
@@ -366,7 +366,7 @@ module.exports = {
     orderTextForAdmin,
     order,
     orderCollapse,
-    orderExpande,
+    orderExpand,
     userStatus,
     adminMenu,
     addProxies,
