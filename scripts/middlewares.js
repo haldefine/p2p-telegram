@@ -106,11 +106,8 @@ const cb = async (ctx, next) => {
         const match = callback_query.data.split('-');
 
         let deleteMessage = false,
+            deleteRemind = false,
             response_message = null;
-
-        if (match[0] !== 'proceed') {
-            sender.deleteMessage(ctx.from.id, user.last_message_id);
-        }
 
         if (match[0] === 'cancel' || match[0] === 'proceed') {
             sender.deleteMessage(ctx.from.id, message_id);
@@ -125,10 +122,14 @@ const cb = async (ctx, next) => {
                 ctx.session.remindTimerId = timer.remind(user, 'startTrial');
 
                 response_message = messages.trial3days(user.lang, message_id);
+
+                deleteRemind = true;
             }
         } else if (match[0] === '3days') {
             if (user.registrationStatus === '3days') {
                 clearTimeout(ctx.session.remindTimerId);
+
+                sender.deleteMessage(ctx.from.id, user.last_message_id);
 
                 return await ctx.scene.enter('trial_3days', {
                     message_id,
@@ -145,6 +146,8 @@ const cb = async (ctx, next) => {
 
                 if (subscriber.isMember) {
                     clearTimeout(ctx.session.remindTimerId);
+
+                    deleteRemind = true;
 
                     if (user.registrationStatus === '3days') {
                         const type = user.registrationStatus;
@@ -194,6 +197,10 @@ const cb = async (ctx, next) => {
         if (response_message) {
             if (deleteMessage) {
                 await ctx.deleteMessage();
+            }
+
+            if (deleteRemind) {
+                sender.deleteMessage(ctx.from.id, user.last_message_id);
             }
 
             sender.enqueue({

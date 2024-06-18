@@ -40,27 +40,26 @@ class WebService {
             ...bot._doc
         };
         delete temp._id;
-        delete temp.name;
         delete temp.working;
         delete temp.assignedToUser;
-        delete temp.use_order_key;
-        delete temp.order_keys;
 
         const request = {
             event: 'startBot',
             data: {
                 ...temp,
                 proxies,
-                currencyPrice: await BinanceService.getPrice(bot.fiat)
+                currencyPrice: await BinanceService.getPrice(temp.fiat)
             }
         };
 
-        const orderKey = bot.order_keys.find(key => key.name === bot.use_order_key);
+        if (temp.name !== '3days') {
+            const orderKey = temp.order_keys.find(key => key.name === temp.use_order_key);
 
-        if (!orderKey) return `Can't find key for orders`;
+            if (!orderKey) return `Can't find key for orders`;
 
-        request.data.orderKey = orderKey;
-        request.data.is_cookie = orderKey.isCookie;
+            request.data.orderKey = orderKey;
+            request.data.is_cookie = orderKey.isCookie;
+        }
 
         const response = await this.sendRequest(request);
 
