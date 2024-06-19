@@ -107,6 +107,10 @@ bot.hears(/clear (users|bots|keys|proxies)/, async (ctx) => {
                 bot_id: '',
                 isUse: false
             });
+
+            await userDBService.updateAll({}, {
+                assignedBots: []
+            });
         } else if (key === 'keys') {
             await keyDBService.deleteAll({});
         } else if (key === 'proxies') {

@@ -29,7 +29,7 @@ class BotService {
                 $expr: { $lt: [{ $size: '$bot_id' }, 2] }
             }, {}, {}, 1);
 
-            if (keys[1]) {
+            if (keys[0]) {
                 newBot.use_order_key = '3days';
                 newBot = keys.reduce((acc, el) => {
                     acc.order_keys[acc.order_keys.length] = {
