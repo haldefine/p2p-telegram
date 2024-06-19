@@ -1,7 +1,7 @@
 const messages = require('../scripts/messages');
 
 const BinanceService = require('./binance-service');
-const { sender } = require('./sender');
+const { signals } = require('./sender');
 const {
     userDBService,
     botDBService
@@ -53,7 +53,7 @@ class EventsService {
             this.lastErrorTime = Date.now();
 
             for (const userId of bot.assignedToUser) {
-                sender.enqueue({
+                signals.enqueue({
                     chat_id: userId,
                     message: messages.botError('en', bot, data.error)
                 });
@@ -116,7 +116,7 @@ class EventsService {
                     for (const user of users) {
                         const message = messages.order(user.lang, status, bot.name, order.orderNo);
 
-                        sender.enqueue({
+                        signals.enqueue({
                             chat_id: user.tg_id,
                             message
                         });
@@ -150,11 +150,11 @@ class EventsService {
                 responses: user.role === 'admin' ?
                     responsesTextAdmin : responsesTextUser,
                 marketPrice: order.marketPrice,
-                diffPrice: order.marketPrice / order.price - 1
+                diffPrice: ((order.marketPrice / order.price - 1) * 100).toFixed(1)
             };
             const message = messages.orderCollapse(user.lang, fullData);
 
-            sender.enqueue({
+            signals.enqueue({
                 chat_id: user.tg_id,
                 message,
                 expand: messages.orderExpand(user.lang, fullData),

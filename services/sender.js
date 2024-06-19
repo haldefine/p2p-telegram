@@ -301,6 +301,10 @@ class Sender extends Queue {
 const sender = new Sender();
 sender.start();
 
+const signals = new Sender();
+signals.start();
+
 module.exports = {
-    sender
+    sender,
+    signals
 }

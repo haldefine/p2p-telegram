@@ -173,12 +173,26 @@ const cb = async (ctx, next) => {
 
                             response_message = messages.menu(user.lang, user, message_id);
                         } else {
-                            const _bot = await BotService.createBot(user, type);
-                            const res = await BotService.startBot(_bot.id);
+                            let isSuccess = false,
+                                error = '';
 
-                            response_message = (res.isSuccess) ?
+                            const create = await BotService.createBot(user, type);
+
+                            if (create.isSuccess) {
+                                const start = await BotService.startBot(create.bot.id);
+
+                                if (start.isSuccess) {
+                                    isSuccess = true;
+                                } else {
+                                    error = start.response;
+                                }
+                            } else {
+                                error = create.response;
+                            }
+
+                            response_message = (isSuccess) ?
                                 messages.menu(user.lang, user, message_id) :
-                                messages.botError(user.lang, _bot, res.response);
+                                messages.botError(user.lang, create.bot, error);
                         }
                     }
                 } else {

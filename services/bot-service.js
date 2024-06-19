@@ -25,11 +25,13 @@ class BotService {
         }
 
         if (name === '3days') {
-            newBot.use_order_key = '3days';
-            newBot = (await keyDBService.getAll({
+            const keys = await keyDBService.getAll({
                 $expr: { $lt: [{ $size: '$bot_id' }, 2] }
-            }, {}, {}, 1))
-                .reduce((acc, el) => {
+            }, {}, {}, 1);
+
+            if (keys[1]) {
+                newBot.use_order_key = '3days';
+                newBot = keys.reduce((acc, el) => {
                     acc.order_keys[acc.order_keys.length] = {
                         name: '3days',
                         first_key: el.api,
@@ -42,6 +44,12 @@ class BotService {
                     };
                     return acc;
                 }, newBot);
+            } else {
+                return {
+                    isSuccess: false,
+                    response: 'No keys available'
+                };
+            }
         }
 
         const bot = await botDBService.create(newBot);
@@ -66,7 +74,10 @@ class BotService {
             }
         }
 
-        return bot;
+        return {
+            isSuccess: true,
+            bot
+        };
     }
 
     async startBot(botId, proxy = { req: { isUse: false }, limit: 1 }) {
@@ -121,10 +132,6 @@ class BotService {
                         isUse: true
                     });
                 }
-            } else {
-                update = {
-                    working: false
-                };
             }
 
             if (update) {

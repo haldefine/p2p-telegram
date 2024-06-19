@@ -20,10 +20,15 @@ const {
     keyDBService,
     proxyDBService
 } = require('./services/db');
-const { sender } = require('./services/sender');
+const {
+    sender,
+    signals
+} = require('./services/sender');
 
 const WebService = require('./services/web-service');
 const EventsService = require('./services/events-service');
+const BinanceService = require('./services/binance-service');
+const BotService = require('./services/bot-service');
 
 const profile = require('./scenes/profile');
 const admin = require('./scenes/admin');
@@ -83,7 +88,25 @@ bot.hears(/clear (users|bots|keys|proxies)/, async (ctx) => {
         if (key === 'users') {
             await userDBService.deleteAll({});
         } else if (key === 'bots') {
-            await botDBService.deleteAll({});
+            const bots = await botDBService.getAll({});
+
+            for (let i = 0; i < bots.length; i++) {
+                const el = bots[i];
+
+                BotService.stopBot(el.id);
+
+                await botDBService.delete({ id: el.id });
+            }
+
+            await keyDBService.updateAll({}, {
+                bot_id: [],
+                isUse: false
+            });
+
+            await proxyDBService.updateAll({}, {
+                bot_id: '',
+                isUse: false
+            });
         } else if (key === 'keys') {
             await keyDBService.deleteAll({});
         } else if (key === 'proxies') {
@@ -131,6 +154,7 @@ bot.telegram.getMe().then((botInfo) => {
 });
 
 sender.create(bot);
+signals.create(bot);
 
 timer.checkSub();
 
