@@ -120,9 +120,9 @@ advNo: ${advNo}
 
 orderNo: ${orderNo}
 
-Date: ${date}
+Date: ${dateTime}
 
-response: ${response}'
+response: ${responses}'
 
 orderTextForUser_text: 'orderNo: ${orderNo}
 

@@ -122,33 +122,33 @@ bot.hears(/clear (users|bots|keys|proxies)/, async (ctx) => {
 });
 
 bot.command('test', async (ctx) => {
-    const message = {
-        type: 'text',
-        text: '123',
-        extra: {
-            reply_markup: {
-                inline_keyboard: [
-                    [{ text: ctx.i18n.t('expand_button'), callback_data: 'expand' }]
-                ]
-            }
-        }
+    const fullData = {
+        //result: t.order[result],
+        result: 'new',
+        price: 100,
+        amounts: 100,
+        coin: 'USD',
+        fiat: 'USD',
+        totalAmount: (100.112312).toFixed(2),
+        minVolume: 'order.min_volume',
+        maxVolume: 'order.max_volume',
+        methods: 'methods',
+        user: ctx.state.user,
+        binanceUsername: 'nickname',
+        dateTime: new Date(),
+        botName: 'name',
+        advNo: 1000,
+        orderNo: '',
+        delay: 1000,
+        responses: '',
+        marketPrice: 1000,
+        diffPrice: ((1000 / 100 - 1) * 100).toFixed(1)
     };
-    const expand = {
-        type: 'text',
-        text: 'expand',
-        extra: {
-            reply_markup: {
-                inline_keyboard: [
-                    [{ text: ctx.i18n.t('collapse_button'), callback_data: 'collapse' }]
-                ]
-            }
-        }
-    };
+    const message = messages.orderExpand('uk', fullData)
+
     sender.enqueue({
         chat_id: ctx.from.id,
-        message,
-        expand,
-        collapse: message
+        message
     });
 });
 

@@ -229,8 +229,8 @@ const orderCollapse = (lang, data) => {
     const message = {
         type: 'text',
         text: i18n.t(lang, 'orderCollapse_message', {
-            status: i18n.t(lang, `${data.result}_status`),
-            ...data
+            ...data,
+            status: i18n.t(lang, `${data.result}_status`)
         }),
         extra: {
             reply_markup: {
@@ -248,12 +248,12 @@ const orderExpand = (lang, data) => {
     const message = {
         type: 'text',
         text: i18n.t(lang, 'orderExpand_message', {
+            ...data,
             status: i18n.t(lang, `${data.result}_status`),
             user: i18n.t(lang, 'user_url', {
                 id: data.user.tg_id,
                 username: data.user.tg_username
-            }),
-            ...data
+            })
         }),
         extra: {
             reply_markup: {

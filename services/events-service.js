@@ -146,6 +146,7 @@ class EventsService {
                 dateTime: this.getTime(),
                 botName: bot.name,
                 advNo: order.advNo,
+                orderNo: '',
                 delay: order.delay,
                 responses: user.role === 'admin' ?
                     responsesTextAdmin : responsesTextUser,
