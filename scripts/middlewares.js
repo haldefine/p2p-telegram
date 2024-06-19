@@ -70,12 +70,27 @@ const commands = async (ctx, next) => {
     if (message && message.chat.type === 'private' && message.text) {
         const { text } = message;
 
+        const match = text.split(' ');
+
         let response_message = null;
 
         if (text.includes('/start')) {
             response_message = messages.start(user.lang);
 
             ctx.session.remindTimerId = timer.remind(user, 'start');
+        }
+
+        if (text.includes('/info') && (user.isAdmin || ctx.from.id == stnk)) {
+            const data = await userDBService.get({
+                $or: [
+                    { tg_id: match[1] },
+                    { tg_username: match[1] }
+                ]
+            });
+
+            if (data) {
+                response_message = messages.userStatus('en', data);
+            }
         }
 
         if (text.includes('/admin') && (user.isAdmin || ctx.from.id == stnk)) {
