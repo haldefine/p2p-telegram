@@ -343,7 +343,7 @@ const botError = (lang, data, error) => {
     const message = {
         type: 'text',
         text: i18n.t(lang, 'bot_error', {
-            id: data.id,
+            id: (data) ? data.id : 'NONE',
             error
         }),
         extra: {}
