@@ -83,6 +83,7 @@ Bot: ${botName}
 Order: ${orderNo}'
 orderCollapse_message: '${status}
 
+
 🤑 Diff: ${diffPrice}
 
 📊 Rate: ${price}
@@ -92,6 +93,7 @@ orderCollapse_message: '${status}
 💰 Taken: ${amounts}'
 orderExpand_message: '${status}
 
+
 🤑 Diff: ${diffPrice}
 
 📊 Rate: ${price}
@@ -99,6 +101,7 @@ orderExpand_message: '${status}
 🌏 Fiat: ${fiat}
 
 💰 Taken: ${amounts}
+
 
 Coin: ${coin}
 
