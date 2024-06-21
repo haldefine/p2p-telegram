@@ -1,7 +1,7 @@
 const messages = require('../scripts/messages');
 
 const BinanceService = require('./binance-service');
-const { sender } = require('./sender');
+const { signals } = require('./sender');
 const {
     userDBService,
     botDBService
@@ -13,26 +13,30 @@ class EventsService {
     }
 
     async handleEvent(message) {
-        const data = JSON.parse(message);
-        const bot = await botDBService.get({ id: data.botId });
+        const data = (message && typeof message === 'string') ? JSON.parse(message) : message;
 
-        if (!bot) {
-            console.log(`Can't find bot`, data);
-            return null;
-        }
+        console.log('[handleEvent]', data);
 
-        if (data.error) {
-            await this.proceedError(bot, data);
-        }
+        if (data && data.botId) {
+            const bot = await botDBService.get({ id: data.botId });
 
-        if (data.order && data.responses) {
-            const order = JSON.parse(data.order);
-            const responses = JSON.parse(data.responses);
+            if (!bot) {
+                console.log(`Can't find bot`, data);
+                return null;
+            }
 
-            await this.proceedOrder(bot, order, responses);
+            if (data.error) {
+                await this.proceedError(bot, data);
+            }
+
+            if (data.order && data.responses) {
+                const order = JSON.parse(data.order);
+                const responses = JSON.parse(data.responses);
+
+                await this.proceedOrder(bot, order, responses);
+            }
         }
     }
-
 
     async proceedError(bot, data) {
         const temp = [
@@ -49,13 +53,13 @@ class EventsService {
             this.lastErrorTime = Date.now();
 
             for (const userId of bot.assignedToUser) {
-                await teact.sendMessage(userId, `Bot: ${bot.name}\nError: ${data.error}`, {
-                    disable_web_page_preview: true,
+                signals.enqueue({
+                    chat_id: userId,
+                    message: messages.botError('en', bot, data.error)
                 });
             }
         }
     }
-
 
     async proceedOrder(bot, order, responses) {
         const users = await userDBService.getAll({
@@ -112,7 +116,7 @@ class EventsService {
                     for (const user of users) {
                         const message = messages.order(user.lang, status, bot.name, order.orderNo);
 
-                        sender.enqueue({
+                        signals.enqueue({
                             chat_id: user.tg_id,
                             message
                         });
@@ -128,7 +132,7 @@ class EventsService {
 
             const fullData = {
                 //result: t.order[result],
-                result,
+                result: (user.registrationStatus === '3days') ? 'new' : result,
                 price: order.price,
                 amounts: taken.join(`${bot.fiat}, `),
                 coin: bot.coin,
@@ -140,11 +144,12 @@ class EventsService {
                 dateTime: this.getTime(),
                 botName: bot.name,
                 advNo: order.advNo,
+                orderNo: '',
                 delay: order.delay,
                 responses: user.role === 'admin' ?
                     responsesTextAdmin : responsesTextUser,
                 marketPrice: order.marketPrice,
-                diffPrice: order.marketPrice / order.price - 1,
+                diffPrice: ((order.marketPrice / order.price - 1) * 100).toFixed(1),
                 // methods: ordersData[0]?.payMethods,
                 // binanceUsername: ordersData[0]?.nickname,
                 methods: order.methods,
@@ -152,15 +157,14 @@ class EventsService {
             };
             const message = messages.orderCollapse(user.lang, fullData);
 
-            sender.enqueue({
+            signals.enqueue({
                 chat_id: user.tg_id,
                 message,
-                expande: messages.orderExpande(user.lang, fullData),
+                expand: messages.orderExpand(user.lang, fullData),
                 collapse: message
             });
         }
     }
-
 
     getTime() {
         const now = new Date();

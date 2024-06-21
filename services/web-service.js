@@ -36,22 +36,32 @@ class WebService {
     }
 
     async startBot(bot, proxies) {
+        const temp = {
+            ...bot._doc
+        };
+        delete temp._id;
+        delete temp.working;
+        delete temp.assignedToUser;
+
         const request = {
             event: 'startBot',
             data: {
-                ...bot,
+                ...temp,
                 proxies,
-                currencyPrice: await BinanceService.getPrice(bot.fiat)
+                currencyPrice: await BinanceService.getPrice(temp.fiat)
             }
         };
 
-        if (bot.name !== '3days') {
-            const orderKey = bot.order_keys.find(key => key.name === bot.use_order_key);
+        if (temp.name !== '3days') {
+            const orderKey = temp.order_keys.find(key => key.name === temp.use_order_key);
 
             if (!orderKey) return `Can't find key for orders`;
 
             request.data.orderKey = orderKey;
             request.data.is_cookie = orderKey.isCookie;
+        } else {
+            request.data.orderKey = [];
+            request.data.is_cookie = false;
         }
 
         const response = await this.sendRequest(request);
@@ -69,11 +79,20 @@ class WebService {
         return response.data;
     }
 
-    sendRequest(data) {
-        return axios.post(process.env.BACKEND_URL, data, {
-            maxBodyLength: Infinity,
-            headers: {'Content-Type': 'application/json'},
-        });
+    async sendRequest(data) {
+        try {
+            return await axios.post(process.env.BACKEND_URL, data, {
+                maxBodyLength: Infinity,
+                headers: {'Content-Type': 'application/json'},
+            });
+        } catch (error) {
+            console.log('[sendRequest]', error);
+
+            return {
+                data: (typeof error.data === 'object') ?
+                    JSON.stringify(error.data) : ''
+            };
+        }
     }
 }
 

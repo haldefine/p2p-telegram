@@ -11,26 +11,40 @@ Unlock the full potential of your trading with our bot and experience the follow
 
 🚀 Start Your Free Trial Now! Click the button below to activate your trial and step into a world of optimized trading. No risks, just rewards!'
 
-menu3days_message: '🕒 You’re Currently on a Trial Period
+menu3days_message: '<b>🕒 You’re Currently on a Trial Period</b>
 
-Your trial will end on ${subEndDate}
+Your trial will end on <b>${subEndDate}</b>
 
 To continue enjoying full access to our bot’s features, consider purchasing a subscription. Unlock all the tools and services designed to enhance your trading experience.
 
 
-🚀 Buy Subscription
+<b>🚀 Buy Subscription</b>
 
 Click the button below to upgrade now and maintain uninterrupted access to all functionalities!'
 
-trial3days_message: '🎉 Your 3-Day Free Trial Has Begun! We’re excited to offer you a taste of our services. During this trial period, you can receive orders in the currency you’ve specified. Explore the benefits and capabilities of our platform with no restrictions.
+trial3days_message: '<b>🎉 Your 3-Day Free Trial Has Begun!</b>
+
+
+We’re excited to offer you a taste of our services. During this trial period, you can receive orders in the currency you’ve specified. Explore the benefits and capabilities of our platform with no restrictions.
 
 
 Make the most of your trial and see how our services can enhance your trading strategies. Enjoy your experience! 🚀'
 
-enterCurrency_message: '🌍 Choose Your Currency! To customize your trading experience, please select the currency in which you would like to receive orders. Examples include USD, RUB, UAH, among others.
+enterCurrency_message: '<b>🌍 Choose Your Currency!</b>
+
+
+To customize your trading experience, please select the currency in which you would like to receive orders. Examples include USD, RUB, UAH, among others.
+
 
 Simply enter your preferred currency to get started and tailor the trading process to your needs. Happy trading! 🚀'
-currencyIsCorrect_message: '✅ Currency Selection Confirmed! You have chosen ${currency} as your currency. All orders in ${currency} will now be directed to you.'
+currencyIsCorrect_message: '<b>✅ Currency Selection Confirmed!</b>
+
+
+You have chosen ${currency} as your currency. All orders in ${currency} will now be directed to you.
+
+
+<b>Attention</b>: the number of orders per day depends on market activity. You just have to wait for new notifications.'
+marketIsTooSmall_message: 'Market for <b>${currency}</b> is too small, please choose other currency.'
 
 subscribeChannels_message: 'To continue enjoying our bot’s services, please subscribe to our channel. This will keep you updated with the latest features, tips, and important announcements.'
 
@@ -42,8 +56,12 @@ It looks like you haven’t started your trial period yet. Dive into the full ca
 🚀 Activate Trial Now! Click the button below to begin and take full advantage of all our features without delay.
 
 Don’t miss out on the opportunity to enhance your experience! Let’s get started!'
-currencyRemind_message: '💹 Choose Your Currency Now! Please make your selection to continue enjoying our services tailored just for you.'
-subscribeRemind_message: '🔗 Subscribe to Start Your Trial Click the button below to subscribe and gain immediate access to the trial. This is where your enhanced trading journey begins!
+currencyRemind_message: '💹 Choose Your Currency Now!
+
+Please make your selection to continue enjoying our services tailored just for you.'
+subscribeRemind_message: '🔗 Subscribe to Start Your Trial
+
+Click the button below to subscribe and gain immediate access to the trial. This is where your enhanced trading journey begins!
 
 Don’t miss out on starting your trial with all the benefits. Subscribe now!'
 
@@ -55,7 +73,8 @@ Just a heads up—your trial period ends tomorrow! Don’t miss out on continuou
 
 incorrectCurrency_message: '⚠️ Incorrect Currency Entered. It looks like there might have been an error in the currency you entered.
 
-🔍 Similar Currencies Based on Your Entry: ${currencies}'
+
+🔍 Similar Currencies Based on Your Entry: <b>${currencies}</b>'
 
 order_message: 'Status: ${status}
 
@@ -63,6 +82,7 @@ Bot: ${botName}
 
 Order: ${orderNo}'
 orderCollapse_message: '${status}
+
 
 🤑 Diff: ${diffPrice}
 
@@ -73,6 +93,7 @@ orderCollapse_message: '${status}
 💰 Taken: ${amounts}'
 orderExpand_message: '${status}
 
+
 🤑 Diff: ${diffPrice}
 
 📊 Rate: ${price}
@@ -80,6 +101,7 @@ orderExpand_message: '${status}
 🌏 Fiat: ${fiat}
 
 💰 Taken: ${amounts}
+
 
 Coin: ${coin}
 
@@ -101,9 +123,9 @@ advNo: ${advNo}
 
 orderNo: ${orderNo}
 
-Date: ${date}
+Date: ${dateTime}
 
-response: ${response}'
+response: ${responses}'
 
 orderTextForUser_text: 'orderNo: ${orderNo}
 
@@ -116,9 +138,13 @@ delay: ${delay}
 
 response: ${response}'
 
+youNotSubscribeToChannel_message: 'You need to join the channel'
+
 adminMenu_message: 'Admin menu'
 enterProxies_message: 'Enter list of proxies in format: <b>IP:PORT:login:pass</b>'
-proxiesIsAdded_message: 'Proxies is added'
+enterKeys_message: 'Enter list of API keys in format: <b>API:SECRET</b>'
+ProxiesIsAdded_message: 'Proxies is added'
+KeysIsAdded_message: 'API keys is added'
 
 userStatus_message: '<b>${user}</b>
 
@@ -134,6 +160,12 @@ Bots list: ${assignedBots}
 
 Binance User Ids: ${binanceUserIds}'
 
+bot_error: 'Bot <b>${id}</b> is not started.
+
+Error:
+
+<code>${error}</code>'
+
 startTrial_button: '🎉Start Your Free Trial!'
 buySub_button: '💸Buy subscription'
 information_button: '📖Information'
@@ -144,12 +176,15 @@ start_button: 'Start'
 
 checkSubscribe_button: 'I have subscribed'
 
-expande_button: 'Expande'
+expand_button: 'Expand'
 collapse_button: 'Collapse'
 
 addAdmin_button: 'Add admin'
 addProxies_button: 'Add proxies'
+addKeys_button: 'Add API keys'
+startBots_button: 'Start bots'
 
+proceed_button: 'Proceed'
 back_button: 'Back'
 cancel_button: 'Cancel'
 

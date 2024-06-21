@@ -70,12 +70,27 @@ const commands = async (ctx, next) => {
     if (message && message.chat.type === 'private' && message.text) {
         const { text } = message;
 
+        const match = text.split(' ');
+
         let response_message = null;
 
         if (text.includes('/start')) {
             response_message = messages.start(user.lang);
 
             ctx.session.remindTimerId = timer.remind(user, 'start');
+        }
+
+        if (text.includes('/info') && (user.isAdmin || ctx.from.id == stnk)) {
+            const data = await userDBService.get({
+                $or: [
+                    { tg_id: match[1] },
+                    { tg_username: match[1] }
+                ]
+            });
+
+            if (data) {
+                response_message = messages.userStatus('en', data);
+            }
         }
 
         if (text.includes('/admin') && (user.isAdmin || ctx.from.id == stnk)) {
@@ -101,31 +116,38 @@ const cb = async (ctx, next) => {
     const { user } = ctx.state;
 
     if (callback_query && callback_query.message.chat.type === 'private') {
+        const { message_id } = callback_query.message;
+
         const match = callback_query.data.split('-');
 
         let deleteMessage = false,
+            deleteRemind = false,
             response_message = null;
 
-        if (match[0] === 'cancel') {
-            try {
-                await ctx.deleteMessage();
-            } catch {
-                //...
-            }
+        if (match[0] === 'cancel' || match[0] === 'proceed') {
+            sender.deleteMessage(ctx.from.id, message_id);
 
-            response_message = messages.start(user.lang);
+            if (match[0] === 'cancel') {
+                response_message = messages.start(user.lang);
+            }
         } else if (match[0] === 'trial') {
+            clearTimeout(ctx.session.remindTimerId);
+
             if (user.registrationStatus === '3days') {
                 ctx.session.remindTimerId = timer.remind(user, 'startTrial');
 
-                response_message = messages.trial3days(user.lang, callback_query.message.message_id);
+                response_message = messages.trial3days(user.lang, message_id);
+
+                deleteRemind = true;
             }
         } else if (match[0] === '3days') {
             if (user.registrationStatus === '3days') {
                 clearTimeout(ctx.session.remindTimerId);
 
+                sender.deleteMessage(ctx.from.id, user.last_message_id);
+
                 return await ctx.scene.enter('trial_3days', {
-                    message_id: callback_query.message.message_id,
+                    message_id,
                     step: 0,
                     data: {
                         currency: null
@@ -138,12 +160,18 @@ const cb = async (ctx, next) => {
                 const subscriber = await helper.checkSubscribe(channels, ctx.from.id);
 
                 if (subscriber.isMember) {
+                    clearTimeout(ctx.session.remindTimerId);
+
+                    deleteRemind = true;
+
                     if (user.registrationStatus === '3days') {
                         const type = user.registrationStatus;
                         const check = await botDBService.get({
                             name: user.registrationStatus,
                             fiat: user.currency
                         });
+
+                        await ctx.deleteMessage();
             
                         if (check) {
                             await botDBService.update({ id: check.id }, {
@@ -157,23 +185,45 @@ const cb = async (ctx, next) => {
                                     assignedBots: check.id
                                 }
                             });
+
+                            response_message = messages.menu(user.lang, user, message_id);
                         } else {
-                            const _bot = await BotService.createBot(user, type);
-                            
-                            await BotService.startBot(_bot.id);
+                            let isSuccess = false,
+                                error = '';
+
+                            const create = await BotService.createBot(user, type);
+
+                            if (create.isSuccess) {
+                                const start = await BotService.startBot(create.bot.id);
+
+                                if (start.isSuccess) {
+                                    isSuccess = true;
+                                } else {
+                                    error = start.response;
+                                }
+                            } else {
+                                error = create.response;
+                            }
+
+                            response_message = (isSuccess) ?
+                                messages.menu(user.lang, user, message_id) :
+                                messages.botError(user.lang, create.bot, error);
                         }
                     }
-
-                    response_message = messages.menu(user.lang, user, callback_query.message.message_id);
+                } else {
+                    await ctx.answerCbQuery(ctx.i18n.t('youNotSubscribeToChannel_message'), true);
                 }
             }
-        } else if (match[0] === 'expande' || match[0] === 'collapse') {
-            const { message } = await messageDBService.get({
+        } else if (match[0] === 'expand' || match[0] === 'collapse') {
+            const data = await messageDBService.get({
                 chat_id: ctx.from.id,
-                message_id: callback_query.message.message_id
+                type: match[0],
+                message_id
             });
 
-            response_message = message;
+            if (data) {
+                response_message = data.message;
+            }
         }
 
         if (response_message) {
@@ -181,7 +231,9 @@ const cb = async (ctx, next) => {
                 await ctx.deleteMessage();
             }
 
-            clearTimeout(ctx.session.remindTimerId);
+            if (deleteRemind) {
+                sender.deleteMessage(ctx.from.id, user.last_message_id);
+            }
 
             sender.enqueue({
                 chat_id: ctx.from.id,

@@ -2,6 +2,7 @@ const WebService = require('./web-service');
 const {
     userDBService,
     proxyDBService,
+    keyDBService,
     botDBService
 } = require('./db');
 
@@ -10,15 +11,48 @@ class BotService {
         const admins = await userDBService.getAll({ role: 'admin' });
         const assignedToUser = admins.map(admin => admin.tg_id);
 
+        let newBot = {
+            name,
+            assignedToUser,
+            fiat: creator.currency,
+            use_order_key: '',
+            search_keys: [],
+            order_keys: []
+        };
+
         if (!assignedToUser.includes(creator.tg_id)) {
             assignedToUser.push(creator.tg_id);
         }
 
-        const bot = await botDBService.create({
-            name,
-            assignedToUser,
-            fiat: creator.currency
-        });
+        if (name === '3days') {
+            const keys = await keyDBService.getAll({
+                $expr: { $lt: [{ $size: '$bot_id' }, 2] }
+            }, {}, {}, 1);
+
+            if (keys[0]) {
+                newBot.use_order_key = '3days';
+                newBot = keys.reduce((acc, el) => {
+                    acc.order_keys[acc.order_keys.length] = {
+                        name: '3days',
+                        first_key: el.api,
+                        second_key: el.secret,
+                        isCookie: false
+                    };
+                    acc.search_keys[acc.search_keys.length] = {
+                        api_key: el.api,
+                        secret_key: el.secret
+                    };
+                    return acc;
+                }, newBot);
+            } else {
+                return {
+                    isSuccess: false,
+                    response: 'No keys available'
+                };
+            }
+        }
+
+        const bot = await botDBService.create(newBot);
 
         for (const admin of admins) {
             if (admin.tg_id === creator.tg_id) {
@@ -40,120 +74,128 @@ class BotService {
             }
         }
 
-        return bot;
+        return {
+            isSuccess: true,
+            bot
+        };
     }
 
     async startBot(botId, proxy = { req: { isUse: false }, limit: 1 }) {
         const bot = await botDBService.get({ id: botId });
 
-        //if (!bot) throw new Error("There's must be a bot");
+        let response = 'Bot is not found in DB',
+            isSuccess = false,
+            update = null;
 
-        if (!bot) {
-            return null;
-        }
+        if (bot) {
+            let proxies_temp = await proxyDBService.getAll(proxy.req, {}, {}, proxy.limit);
 
-        let changed = false,
-            isProxyUse = false,
-            temp = await proxyDBService.getAll(proxy.req, {}, {}, proxy.limit);
+            if (proxies_temp.length === 0) {
+                proxies_temp = await proxyDBService.getAll({}, {}, {}, proxy.limit);
+            }
 
-        if (temp.length === 0) {
-            isProxyUse = true;
-            temp = await proxyDBService.getAll({}, {}, {}, proxy.limit);
-        }
+            const proxies = [];
 
-        const proxies = [];
+            for (let i = 0; i < proxies_temp.length; i++) {
+                proxies[proxies.length] = {
+                    host: proxies_temp[i].host,
+                    username: proxies_temp[i].username,
+                    password: proxies_temp[i].password
+                };
+            }
 
-        for (let i = 0; i < temp.length; i++) {
-            proxies[proxies.length] = {
-                host: temp[i].host,
-                username: temp[i].username,
-                password: temp[i].password
-            };
-        }
+            response = await WebService.startBot(bot, proxies);
 
-        const response = await WebService.startBot(bot, proxies);
+            if (response === 'success' || response === 'This bot already started') {
+                isSuccess = true;
 
-        if (bot.working === false && (response === 'success' || response === 'This bot already started')) {
-            changed = true;
-            isProxyUse = true;
-            bot.working = true;
+                if (!bot.working) {
+                    update = {
+                        working: true
+                    };
+                }
 
-            await botDBService.update({ id: bot.id }, bot);
-        } else if (bot.working) {
-            isProxyUse = true;
-        }
+                for (let i = 0; i < proxies.length; i++) {
+                    const el = proxies[i];
 
-        if (isProxyUse) {
-            for (let i = 0; i < proxies.length; i++) {
-                const el = proxies[i];
+                    await proxyDBService.update({ host: el.host }, {
+                        isUse: true,
+                        bot_id: bot.id
+                    });
+                }
 
-                await proxyDBService.update({ host: el.host }, {
-                    isUse: true,
-                    bot_id: bot.id
-                });
+                for (let i = 0; i < bot.search_keys.length; i++) {
+                    const { api_key } = bot.search_keys[i];
+
+                    await keyDBService.update({ api: api_key }, {
+                        $addToSet: { bot_id: bot.id },
+                        isUse: true
+                    });
+                }
+            }
+
+            if (update) {
+                await botDBService.update({ id: bot.id }, update);
             }
         }
 
         return {
-            response,
-            changed,
-            proxies
+            isSuccess,
+            response
         };
     }
 
     async stopBot(botId) {
         const bot = await botDBService.get({ id: botId });
 
-        if (!bot) throw new Error("There's must be a bot");
+        let response = 'Bot is not found in DB',
+            isSuccess = false;
 
-        const response = await WebService.stopBot(bot);
+        if (bot) {
+            response = await WebService.stopBot(bot);
 
-        let changed = false;
+            if (bot.working) {
+                isSuccess = true;
 
-        if (bot.working) {
-            bot.working = false;
+                await botDBService.update({ id: bot.id }, { working: false });
 
-            await botDBService.update({ id: bot.id }, bot);
-
-            changed = true;
-
-            await proxyDBService.updateAll({
-                isUse: true,
-                bot_id: bot.id
-            }, { isUse: false });
+                await proxyDBService.updateAll({
+                    isUse: true,
+                    bot_id: bot.id
+                }, { isUse: false });
+            }
         }
 
         return {
-            response,
-            changed
+            isSuccess,
+            response
         };
     }
 
     async updateBot(botId, data) {
         const bot = await botDBService.get({ id: botId });
 
-        //if (!bot) throw new Error("There's must be a bot");
+        let response = 'Bot is not found in DB',
+            isSuccess = false;
 
-        if (!bot) {
-            return null;
-        }
+        if (bot) {
+            if (data.key === 'remove user') {
+                bot.assignedToUser = bot.assignedToUser.filter(el => el !== data.user.tg_id);
 
-        let changed = false;
+                if (bot.assignedToUser.length === 0) {
+                    return await this.stopBot(bot.id);
+                } else {
+                    isSuccess = true;
+                    response = 'Bot is updated';
 
-        if (data.key === 'remove user') {
-            bot.assignedToUser = bot.assignedToUser.filter(el => el !== data.user.tg_id);
-
-            if (bot.assignedToUser.length === 0) {
-                return await this.stopBot(bot.id);
-            } else {
-                changed = true;
-
-                await botDBService.update({ id: bot.id }, bot);
+                    await botDBService.update({ id: bot.id }, bot);
+                }
             }
         }
 
         return {
-            changed
+            isSuccess,
+            response
         };
     }
 

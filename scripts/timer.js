@@ -34,6 +34,8 @@ const startBots = async () => {
             limit: 1
         };
 
+        console.log(el)
+
         await BotService.startBot(el.id, proxy);
     }
 

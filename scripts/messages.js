@@ -134,8 +134,15 @@ const remind = (lang, key) => {
     const message = {
         type: 'text',
         text: i18n.t(lang, `${key}Remind_message`),
-        extra: {},
-        delete: DELETE_DELAY
+        extra: {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: i18n.t(lang, 'proceed_button'), callback_data: 'proceed' }]
+                ]
+            }
+        },
+        deleteAfterAction: true
+        //delete: DELETE_DELAY
     };
 
     return message;
@@ -163,7 +170,27 @@ const incorrectCurrency = (lang, currencies, message_id = null) => {
         type: (message_id) ? 'edit_text' : 'text',
         message_id,
         text: i18n.t(lang, 'incorrectCurrency_message', {
-            currencies
+            currencies: currencies.join(',')
+        }),
+        extra: {
+            reply_markup: {
+                inline_keyboard: currencies.reduce((acc, el) => {
+                    acc[acc.length] = [{ text: el, callback_data: `set-${el}` }];
+
+                    return acc;
+                }, [])
+            }
+        }
+    };
+
+    return message;
+};
+
+const marketIsTooSmall = (lang, currency) => {
+    const message = {
+        type: 'text',
+        text: i18n.t(lang, 'marketIsTooSmall_message', {
+            currency
         }),
         extra: {}
     };
@@ -202,13 +229,13 @@ const orderCollapse = (lang, data) => {
     const message = {
         type: 'text',
         text: i18n.t(lang, 'orderCollapse_message', {
-            status: i18n.t(lang, `${data.result}_status`),
-            ...data
+            ...data,
+            status: i18n.t(lang, `${data.result}_status`)
         }),
         extra: {
             reply_markup: {
                 inline_keyboard: [
-                    [{ text: i18n.t(lang, 'expande_button'), callback_data: 'expande' }]
+                    [{ text: i18n.t(lang, 'expand_button'), callback_data: 'expand' }]
                 ]
             }
         }
@@ -217,16 +244,16 @@ const orderCollapse = (lang, data) => {
     return message;
 };
 
-const orderExpande = (lang, data) => {
+const orderExpand = (lang, data) => {
     const message = {
         type: 'text',
-        text: i18n.t(lang, 'orderExpande_message', {
+        text: i18n.t(lang, 'orderExpand_message', {
+            ...data,
             status: i18n.t(lang, `${data.result}_status`),
             user: i18n.t(lang, 'user_url', {
                 id: data.user.tg_id,
                 username: data.user.tg_username
-            }),
-            ...data
+            })
         }),
         extra: {
             reply_markup: {
@@ -268,8 +295,9 @@ const adminMenu = (lang) => {
         extra: {
             reply_markup: {
                 inline_keyboard: [
-                    [{ text: i18n.t(lang, 'addAdmin_button'), callback_data: 'add' }],
-                    [{ text: i18n.t(lang, 'addProxies_button'), callback_data: 'proxies' }],
+                    [{ text: i18n.t(lang, 'addProxies_button'), callback_data: 'Proxies' }],
+                    [{ text: i18n.t(lang, 'addKeys_button'), callback_data: 'Keys' }],
+                    [{ text: i18n.t(lang, 'startBots_button'), callback_data: 'startBots' }],
                     [{ text: i18n.t(lang, 'cancel_button'), callback_data: 'cancel' }]
                 ]
             }
@@ -279,10 +307,10 @@ const adminMenu = (lang) => {
     return message;
 };
 
-const addProxies = (lang) => {
+const addProxies = (lang, key) => {
     const message = {
         type: 'text',
-        text: i18n.t(lang, 'enterProxies_message'),
+        text: i18n.t(lang, `enter${key}_message`),
         extra: {
             reply_markup: {
                 inline_keyboard: [
@@ -295,10 +323,10 @@ const addProxies = (lang) => {
     return message;
 };
 
-const proxiesIsAdded = (lang) => {
+const proxiesIsAdded = (lang, key) => {
     const message = {
         type: 'text',
-        text: i18n.t(lang, 'proxiesIsAdded_message'),
+        text: i18n.t(lang, `${key}IsAdded_message`),
         extra: {
             reply_markup: {
                 inline_keyboard: [
@@ -306,6 +334,19 @@ const proxiesIsAdded = (lang) => {
                 ]
             }
         }
+    };
+
+    return message;
+};
+
+const botError = (lang, data, error) => {
+    const message = {
+        type: 'text',
+        text: i18n.t(lang, 'bot_error', {
+            id: (data) ? data.id : 'NONE',
+            error
+        }),
+        extra: {}
     };
 
     return message;
@@ -320,13 +361,15 @@ module.exports = {
     remind,
     subIsEnd1DayRemind,
     incorrectCurrency,
+    marketIsTooSmall,
     orderTextForUser,
     orderTextForAdmin,
     order,
     orderCollapse,
-    orderExpande,
+    orderExpand,
     userStatus,
     adminMenu,
     addProxies,
-    proxiesIsAdded
+    proxiesIsAdded,
+    botError
 }

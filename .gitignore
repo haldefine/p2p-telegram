@@ -15,3 +15,8 @@ pass.txt
 /src
 
 config.json
+p2p backend postman.json
+
+*.txt
+*.ppk
+*.pem

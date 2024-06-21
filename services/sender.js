@@ -25,7 +25,12 @@ class Sender extends Queue {
 
     async start() {
         if (this.storage[this.count - 1]) {
-            const { chat_id, message } = this.storage[this.count - 1];
+            const {
+                chat_id,
+                message,
+                expand,
+                collapse
+            } = this.storage[this.count - 1];
 
             this.dequeue();
 
@@ -35,19 +40,33 @@ class Sender extends Queue {
                 setTimeout(() => this.deleteMessage(chat_id, res.message_id), message.delete);
             }
 
-            if (message.expande) {
-                await messageDBService.create({
-                    chat_id: chat_id,
-                    message_id: res.message_id,
-                    message: message.expande
+            if (message.deleteAfterAction) {
+                await userDBService.update({ tg_id: chat_id }, {
+                    last_message_id: res.message_id
                 });
             }
 
-            if (message.collapse) {
+            if (expand) {
+                expand.type = 'edit_text';
+                expand.message_id = res.message_id;
+
                 await messageDBService.create({
                     chat_id: chat_id,
+                    type: 'expand',
                     message_id: res.message_id,
-                    message: message.collapse
+                    message: expand
+                });
+            }
+
+            if (collapse) {
+                collapse.type = 'edit_text';
+                collapse.message_id = res.message_id;
+
+                await messageDBService.create({
+                    chat_id: chat_id,
+                    type: 'collapse',
+                    message_id: res.message_id,
+                    message: collapse
                 });
             }
 
@@ -67,7 +86,7 @@ class Sender extends Queue {
                 only_if_banned: true
             });
         } catch (error) {
-            console.log('[Sender]', error.response);
+            console.log('[unbanUser]', error.response);
 
             return null;
         }
@@ -77,7 +96,7 @@ class Sender extends Queue {
         try {
             return await this.bot.telegram.banChatMember(chatId, user.tg_id);
         } catch (error) {
-            console.log('[Sender]', error.response);
+            console.log('[banUser]', error.response);
 
             return null;
         }
@@ -87,7 +106,7 @@ class Sender extends Queue {
         try {
             return await this.bot.telegram.deleteMessage(id, message_id);
         } catch (error) {
-            console.log('[Sender]', error.response);
+            console.log('[deleteMessage]', id);
 
             return null;
         }
@@ -100,7 +119,7 @@ class Sender extends Queue {
                 message_ids
             });
         } catch (error) {
-            console.log('[Sender]', error.response);
+            console.log('[deleteMessages]', error.response);
 
             return null;
         }
@@ -112,7 +131,7 @@ class Sender extends Queue {
                 chat_id,
             });
         } catch (error) {
-            console.log('[Sender]', error.response);
+            console.log('[getChat]', error.response);
 
             return null;
         }
@@ -125,7 +144,7 @@ class Sender extends Queue {
                 user_id
             });
         } catch (error) {
-            console.log('[Sender]', error.response);
+            console.log('[getChatMember]', error.response);
 
             return null;
         }
@@ -235,13 +254,24 @@ class Sender extends Queue {
         } catch (error) {
             const response = (error.response) ? error.response : error;
 
+            const modified_errors = [
+                'Bad Request: message is not modified:',
+                'Bad Request: message to edit not found'
+            ];
+            const parse_errors = [
+                "Bad Request: can't parse entities:"
+            ];
+            const block_errors = [
+                'Forbidden: bot was blocked by the user',
+                "Forbidden: bot can't initiate conversation with a user",
+                'Forbidden: user is deactivated'
+            ];
+
             console.log(message);
 
-            console.log('[Sender]', response);
+            console.log('[sendMessage]', response);
 
-            if (response.description &&
-                response.description.includes('Bad Request: message is not modified:')
-            ) {
+            if (response.description && modified_errors.includes(response.description)) {
                 const temp = {
                     type: 'text',
                     text: message.text,
@@ -249,23 +279,18 @@ class Sender extends Queue {
                 };
 
                 return this.sendMessage(chatId, temp);
-            } else if (response.description &&
-                response.description.includes("Bad Request: can't parse entities:")
-                ) {
-                    const temp = {
-                        type: message.type,
-                        text: message.text.replace(/([<>\/])/g, ''),
-                        extra: {}
-                    };
+            } else if (response.description && parse_errors.includes(response.description)) {
+                const temp = {
+                    type: message.type,
+                    text: message.text.replace(/([<>\/])/g, ''),
+                    extra: {}
+                };
 
-                    return this.sendMessage(chatId, temp);
-            } else if (response.description &&
-                (response.description === 'Forbidden: bot was blocked by the user' ||
-                response.description === "Forbidden: bot can't initiate conversation with a user" ||
-                response.description === 'Forbidden: user is deactivated')) {
-                    return await userDBService.update({ tg_id: chatId }, {
-                        isActive: false
-                    });
+                return this.sendMessage(chatId, temp);
+            } else if (response.description && block_errors.includes(response.description)) {
+                return await userDBService.update({ tg_id: chatId }, {
+                    isActive: false
+                });
             } else {
                 return null;
             }
@@ -276,6 +301,10 @@ class Sender extends Queue {
 const sender = new Sender();
 sender.start();
 
+const signals = new Sender();
+signals.start();
+
 module.exports = {
-    sender
+    sender,
+    signals
 }
