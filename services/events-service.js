@@ -86,17 +86,17 @@ class EventsService {
             responsesTextAdmin += messages.orderTextForAdmin('en', orderNo, proxy.host, proxy.username, response.delay, binanceResponse.message || binanceResponse.msg);
 
             if (binanceResponse.code === '000000') {
-                const payMethods = [];
+                // const payMethods = [];
 
                 result = 'success';
                 taken.push(binanceResponse?.data?.orderMatch?.totalPrice);
                 ordersData.push({
-                    payMethods: `[${payMethods.join(', ')}]`,
+                    // payMethods: `[${payMethods.join(', ')}]`,
                     orderNo,
                     side,
-                    nickname: side === 'BUY' ?
-                        binanceResponse?.data?.orderMatch?.sellerNickname :
-                        binanceResponse?.data?.orderMatch?.buyerNickname,
+                    // nickname: side === 'BUY' ?
+                    //     binanceResponse?.data?.orderMatch?.sellerNickname :
+                    //     binanceResponse?.data?.orderMatch?.buyerNickname,
                 });
             }
         }
@@ -136,9 +136,7 @@ class EventsService {
                 totalAmount: order.totalAmount.toFixed(2),
                 minVolume: order.min_volume,
                 maxVolume: order.max_volume,
-                methods: ordersData[0]?.payMethods,
                 user: targetUser,
-                binanceUsername: ordersData[0]?.nickname,
                 dateTime: this.getTime(),
                 botName: bot.name,
                 advNo: order.advNo,
@@ -146,7 +144,11 @@ class EventsService {
                 responses: user.role === 'admin' ?
                     responsesTextAdmin : responsesTextUser,
                 marketPrice: order.marketPrice,
-                diffPrice: order.marketPrice / order.price - 1
+                diffPrice: order.marketPrice / order.price - 1,
+                // methods: ordersData[0]?.payMethods,
+                // binanceUsername: ordersData[0]?.nickname,
+                methods: order.methods,
+                binanceUsername: order.nickname,
             };
             const message = messages.orderCollapse(user.lang, fullData);
 
