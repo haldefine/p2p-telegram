@@ -25,6 +25,7 @@ class BinanceService {
 
         const res = await axios.request(config);
         const fiats = res.data.data.map(fiat => fiat.currencyCode);
+
         return fiats.filter(fiat => fiat !== 'UAH');
     }
 
@@ -53,6 +54,7 @@ class BinanceService {
         const p2pdata = res.data.data.areas.find(area => area.area === 'P2P');
         const buySide = p2pdata.tradeSides.find(side => side.side === 'BUY');
         // const payMethods = buySide.tradeMethods.map(method => method.identifier);
+
         return buySide.assets.map(asset => asset.asset);
     }
 
@@ -77,7 +79,8 @@ class BinanceService {
             data : data
         };
 
-        const res = await axios.request(config)
+        const res = await axios.request(config);
+
         return res.data.data.tradeMethods.map(m => m.identifier);
     }
 
@@ -116,19 +119,25 @@ class BinanceService {
      * @return {Promise<string>} A promise that resolves to the user's full name retrieved from the API response.
      */
     async getUserIdentifier(api_key, secret_key) {
-        const res = await axios.request({
-            method: 'post',
-            maxBodyLength: Infinity,
-            url: this.signUrl('https://api.binance.com/sapi/v1/c2c/user/baseDetail', secret_key),
-            headers: {
-                'X-MBX-APIKEY': api_key,
-                'Content-Type': 'application/json'
-            },
-            data: {}
-        });
-        return res.data.data.kycFullName;
-    }
+        try {
+            const res = await axios.request({
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: this.signUrl('https://api.binance.com/sapi/v1/c2c/user/baseDetail', secret_key),
+                headers: {
+                    'X-MBX-APIKEY': api_key,
+                    'Content-Type': 'application/json'
+                },
+                data: {}
+            });
 
+            return res.data.data.kycFullName;
+        } catch (error) {
+            console.log('getUserIdentifier', error);
+
+            return null;
+        }
+    }
 
     waitWhenFulfill(orderNo, api_key, secret_key, callback) {
         let lastStatus = 0;

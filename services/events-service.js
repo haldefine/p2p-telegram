@@ -1,10 +1,12 @@
 const messages = require('../scripts/messages');
 
 const BinanceService = require('./binance-service');
+const BotService = require('./bot-service');
 const { signals } = require('./sender');
 const {
     userDBService,
-    botDBService
+    botDBService,
+    orderDBService
 } = require('./db');
 
 class EventsService {
@@ -128,11 +130,11 @@ class EventsService {
         const targetUser = users.find(user => user.role !== 'admin');
 
         for (const user of users) {
-            //const t = translation[user.lang];
-
             const fullData = {
-                //result: t.order[result],
-                result: (user.registrationStatus === '3days') ? 'new' : result,
+                tg_id: targetUser.tg_id,
+                bot_id: bot.id,
+                result: (user.registrationStatus === '3days') ?
+                    'new' : result,
                 price: order.price,
                 amounts: taken.join(`${bot.fiat}, `),
                 coin: bot.coin,
@@ -155,6 +157,7 @@ class EventsService {
                 methods: order.methods,
                 binanceUsername: order.nickname,
             };
+
             const message = messages.orderCollapse(user.lang, fullData);
 
             signals.enqueue({
@@ -163,6 +166,22 @@ class EventsService {
                 expand: messages.orderExpand(user.lang, fullData),
                 collapse: message
             });
+
+            if (targetUser.registrationStatus !== '3days') {
+                await orderDBService.create(fullData);
+            }
+
+            if (targetUser.registrationStatus === '3order') {
+                const counter = await orderDBService.getCount({ tg_id: targetUser.tg_id });
+
+                if (counter >= 3) {
+                    await BotService.stopBot(bot.id);
+                }
+            }
+
+            if (targetUser.registrationStatus === 'free') {
+                await BotService.stopBot(bot.id);
+            }
         }
     }
 

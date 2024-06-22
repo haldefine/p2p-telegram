@@ -7,11 +7,18 @@ const {
 } = require('./db');
 
 class BotService {
-    async createBot(creator, name) {
+    async createBot(creator, name, data = null) {
         const admins = await userDBService.getAll({ role: 'admin' });
         const assignedToUser = admins.map(admin => admin.tg_id);
 
-        let newBot = {
+        let newBot = (data) ?
+        {
+            ...data,
+            assignedToUser,
+            use_order_key: '',
+            search_keys: [],
+            order_keys: []
+        } : {
             name,
             assignedToUser,
             fiat: creator.currency,
@@ -24,16 +31,26 @@ class BotService {
             assignedToUser.push(creator.tg_id);
         }
 
-        if (name === '3days') {
-            const keys = await keyDBService.getAll({
-                $expr: { $lt: [{ $size: '$bot_id' }, 2] }
-            }, {}, {}, 1);
+        if (name === '3days' || name === '3orders') {
+            const req = (name === '3days') ?
+                {
+                    $expr: { $lt: [{ $size: '$bot_id' }, 2] }
+                } :
+                {
+                    tg_id: creator.tg_id,
+                    $expr: { $lt: [{ $size: '$bot_id' }, 2] }
+                };
+            const keys = await keyDBService.getAll(req, {}, {}, 1);
+
+            if (name === '3orders') {
+                newBot.maxOrder = 100;
+            }
 
             if (keys[0]) {
-                newBot.use_order_key = '3days';
+                newBot.use_order_key = name;
                 newBot = keys.reduce((acc, el) => {
                     acc.order_keys[acc.order_keys.length] = {
-                        name: '3days',
+                        name,
                         first_key: el.api,
                         second_key: el.secret,
                         isCookie: false

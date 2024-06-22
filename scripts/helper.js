@@ -35,7 +35,17 @@ const checkSubscribe = async (channels, user_id) => {
     return _;
 };
 
+const checkFiat = (data, currency) => data.reduce((acc, el) => {
+    if ((el[0] === currency[0] && el[1] === currency[1]) ||
+    (el[1] === currency[1] && el[2] === currency[2])) {
+        acc[acc.length] = el;
+    }
+
+    return acc;
+}, []);
+
 module.exports = {
     getChannels,
-    checkSubscribe
+    checkSubscribe,
+    checkFiat
 }

@@ -35,10 +35,79 @@ const ProxySchema = new Schema({
 }, { versionKey: false });
 
 const KeySchema = new Schema({
+    tg_id: String,
     bot_id: [String],
     isUse: Boolean,
+    name: String,
     api: String,
     secret: String
+}, { versionKey: false });
+
+const OrderSchema = new Schema({
+    tg_id: {
+        type: String
+    },
+    bot_id: {
+        type: String
+    },
+    date: {
+        type: Date,
+        default: Date.now
+    },
+    result: {
+        type: String
+    },
+    price: {
+        type: Number
+    },
+    amounts: {
+        type: String
+    },
+    coin: {
+        type: String
+    },
+    fiat: {
+        type: String
+    },
+    totalAmount: {
+        type: Number
+    },
+    minVolume: {
+        type: Number
+    },
+    maxVolume: {
+        type: Number
+    },
+    methods: {
+        type: String
+    },
+    binanceUsername: {
+        type: String
+    },
+    dateTime: {
+        type: String
+    },
+    botName: {
+        type: String
+    },
+    advNo: {
+        type: String
+    },
+    orderNo: {
+        type: String
+    },
+    delay: {
+        type: Number
+    },
+    responses: {
+        type: String
+    },
+    marketPrice: {
+        type: Number
+    },
+    diffPrice: {
+        type: Number
+    }
 }, { versionKey: false });
 
 const BotSchema = new Schema({
@@ -145,10 +214,12 @@ const BotSchema = new Schema({
 
 const Proxy = mongoose.model('Proxy', ProxySchema);
 const Key = mongoose.model('Key', KeySchema);
+const Order = mongoose.model('Order', OrderSchema);
 const Bot = mongoose.model('Bot', BotSchema);
 
 module.exports = {
     Proxy,
     Key,
+    Order,
     Bot
 }

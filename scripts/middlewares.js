@@ -28,6 +28,8 @@ const start = async (ctx, next) => {
 
             if (registrationStatus === '3days') {
                 sub_end_date.setDate(sub_end_date.getDate() + 3);
+            } else {
+                sub_end_date.setDate(sub_end_date.getDate() + 30);
             }
 
             ctx.state.user = await userDBService.get({ tg_id: ctx.from.id });
@@ -133,13 +135,13 @@ const cb = async (ctx, next) => {
         } else if (match[0] === 'trial') {
             clearTimeout(ctx.session.remindTimerId);
 
-            if (user.registrationStatus === '3days') {
-                ctx.session.remindTimerId = timer.remind(user, 'startTrial');
+            ctx.session.remindTimerId = timer.remind(user, 'startTrial');
 
-                response_message = messages.trial3days(user.lang, message_id);
+            deleteRemind = true;
 
-                deleteRemind = true;
-            }
+            response_message = (user.registrationStatus === '3days') ?
+                messages.startTrial3days(user.lang, message_id) :
+                messages.startTrial3orders(user.lang, message_id);
         } else if (match[0] === '3days') {
             if (user.registrationStatus === '3days') {
                 clearTimeout(ctx.session.remindTimerId);
@@ -154,6 +156,29 @@ const cb = async (ctx, next) => {
                     }
                 });
             }
+        } else if (match[0] === '3orders') {
+            if (user.registrationStatus === '3orders') {
+                clearTimeout(ctx.session.remindTimerId);
+
+                sender.deleteMessage(ctx.from.id, user.last_message_id);
+
+                return await ctx.scene.enter('trial_3orders', {
+                    message_id,
+                    step: 0,
+                    data: {}
+                });
+            }
+        } else if (match[0] === 'add') {
+            if (match[1] === 'api_keys') {
+                clearTimeout(ctx.session.remindTimerId);
+
+                sender.deleteMessage(ctx.from.id, user.last_message_id);
+
+                return await ctx.scene.enter(match[1], {
+                    message_id,
+                    step: null
+                });
+            }
         } else if (match[0] === 'check') {
             if (match[1] === 'subscribe') {
                 const channels = await helper.getChannels();
@@ -164,12 +189,13 @@ const cb = async (ctx, next) => {
 
                     deleteRemind = true;
 
-                    if (user.registrationStatus === '3days') {
+                    if (user.registrationStatus === '3days' || user.registrationStatus === '3orders') {
                         const type = user.registrationStatus;
-                        const check = await botDBService.get({
-                            name: user.registrationStatus,
-                            fiat: user.currency
-                        });
+                        const check = (user.registrationStatus === '3days') ?
+                            await botDBService.get({
+                                name: user.registrationStatus,
+                                fiat: user.currency
+                            }) : null;
 
                         await ctx.deleteMessage();
             

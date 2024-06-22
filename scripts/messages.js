@@ -15,6 +15,29 @@ const i18n = new TelegrafI18n({
 
 const DELETE_DELAY = 10000;
 
+const paginations = (lang, data, page, length, size = 5) => {
+    let inline_keyboard = [];
+
+    if (data.length > 0) {
+        if (page > 1 && page * size < length) {
+            inline_keyboard = [
+                { text: i18n.t(lang, 'back_button'), callback_data: `next-${page - 1}` },
+                { text: i18n.t(lang, 'next_button'), callback_data: `next-${page + 1}` }
+            ];
+        } else if (page === 1 && page * size < length) {
+            inline_keyboard = [
+                { text: i18n.t(lang, 'next_button'), callback_data: `next-${page + 1}` }
+            ];
+        } else if (page > 1) {
+            inline_keyboard = [
+                { text: i18n.t(lang, 'back_button'), callback_data: `next-${page - 1}` }
+            ];
+        }
+    }
+
+    return inline_keyboard;
+};
+
 const start = (lang) => {
     const CONFIG = JSON.parse(fs.readFileSync('./config.json'));
 
@@ -69,7 +92,7 @@ const menu = (lang, user, message_id = null) => {
     return message;
 };
 
-const trial3days = (lang, message_id = null) => {
+const startTrial3days = (lang, message_id = null) => {
     const message = {
         type: (message_id) ? 'edit_text' : 'text',
         message_id,
@@ -86,7 +109,7 @@ const trial3days = (lang, message_id = null) => {
     return message;
 };
 
-const trial3daysSettings = (lang, step, data, message_id = null) => {
+const trial3days = (lang, step, data, message_id = null) => {
     const message = {
         type: (message_id) ? 'edit_text' : 'text',
         message_id,
@@ -98,9 +121,60 @@ const trial3daysSettings = (lang, step, data, message_id = null) => {
         message.text = i18n.t(lang, 'enterCurrency_message');
     } else if (step === 1) {
         message.text = i18n.t(lang, 'currencyIsCorrect_message', {
-            currency: data.currency
+            currency: data.currency || data.fiat
         });
     }
+
+    return message;
+};
+
+const startTrial3orders = (lang, message_id = null) => {
+    const message = {
+        type: (message_id) ? 'edit_text' : 'text',
+        message_id,
+        text: i18n.t(lang, 'trial3orders_message'),
+        extra: {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: i18n.t(lang, 'addAPIKey_button'), callback_data: '3orders' }]
+                ]
+            }
+        }
+    };
+
+    return message;
+};
+
+const trial3orders = (lang, step, message_id = null) => {
+    const message = {
+        type: (message_id) ? 'edit_text' : 'text',
+        message_id,
+        text: '',
+        extra: {}
+    };
+    let inline_keyboard = [];
+
+    if (step === 0) {
+        message.text = i18n.t(lang, 'missingBinanceAPIKeys_message');
+
+        inline_keyboard = [
+            [{ text: i18n.t(lang, 'addAPIKeys_button'), callback_data: 'api_keys' }]
+        ];
+    } else if (step === 1) {
+        message.text = i18n.t(lang, 'addBinanceAPIKeys_message', {
+            instruction: i18n.t(lang, 'instruction_url')
+        });
+
+        inline_keyboard = [
+            [{ text: i18n.t(lang, 'addKey_button'), callback_data: 'add-api_keys' }]
+        ];
+    }
+
+    message.extra = {
+        reply_markup: {
+            inline_keyboard
+        }
+    };
 
     return message;
 };
@@ -175,7 +249,7 @@ const incorrectCurrency = (lang, currencies, message_id = null) => {
         extra: {
             reply_markup: {
                 inline_keyboard: currencies.reduce((acc, el) => {
-                    acc[acc.length] = [{ text: el, callback_data: `set-${el}` }];
+                    acc[acc.length] = [{ text: el, callback_data: `set-fiat-${el}` }];
 
                     return acc;
                 }, [])
@@ -267,6 +341,281 @@ const orderExpand = (lang, data) => {
     return message;
 };
 
+const botSettings = (lang, user, data, message_id = null) => {
+    const isLock = (user.registrationStatus === 'subscription') ? '' : '🔒';
+    const message = {
+        type: (message_id) ? 'edit_text' : 'text',
+        message_id,
+        text: i18n.t(lang, 'botSettings_message'),
+        extra: {
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: i18n.t(lang, 'botName_button', {
+                            data: data['name']
+                        }),
+                        callback_data: 'choose-name'
+                    }],
+                    [{
+                        text: i18n.t(lang, 'fiat_button', {
+                            data: data['fiat']
+                        }),
+                        callback_data: 'choose-fiat'
+                    }],
+                    [{
+                        text: i18n.t(lang, 'payMethods_button', {
+                            isLock,
+                            data: (data['payMethods'].length > 3) ? '✅' : '❌'
+                        }),
+                        callback_data: 'choose-payMethods'
+                    }],
+                    [{
+                        text: i18n.t(lang, 'coin_button', {
+                            isLock,
+                            data: data['coin']
+                        }),
+                        callback_data: 'choose-coin'
+                    }],
+                    [{
+                        text: i18n.t(lang, 'maxOrder_button', {
+                            isLock,
+                            data: data['maxOrder']
+                        }),
+                        callback_data: 'choose-maxOrder'
+                    }],
+                    [{
+                        text: i18n.t(lang, 'minOrder_button', {
+                            isLock,
+                            data: data['minOrder']
+                        }),
+                        callback_data: 'choose-minOrder'
+                    }],
+                    [{
+                        text: i18n.t(lang, 'priceType_button', {
+                            isLock,
+                            data: data['priceType']
+                        }),
+                        callback_data: 'change-priceType'
+                    }],
+                    [{
+                        text: i18n.t(lang, 'targetPrice_button', {
+                            isLock,
+                            data: data['targetPrice']
+                        }),
+                        callback_data: 'choose-targetPrice'
+                    }],
+                    [{
+                        text: i18n.t(lang, 'colCreateOrders_button', {
+                            isLock,
+                            data: data['colCreateOrders']
+                        }),
+                        callback_data: 'choose-colCreateOrders'
+                    }],
+                    [{
+                        text: i18n.t(lang, 'takeMaxOrder_button', {
+                            isLock,
+                            data: (data['take_max_order']) ? '✅' : '❌'
+                        }),
+                        callback_data: 'change-take_max_order'
+                    }],
+                    [{
+                        text: i18n.t(lang, 'APIKeys_button'),
+                        callback_data: 'menu-api_keys'
+                    }]
+                ]
+            }
+        }
+    };
+
+    return message;
+};
+
+const botSettingsType = (lang, step, data, message_id = null) => {
+    const message = {
+        type: (message_id) ? 'edit_text' : 'text',
+        message_id,
+        text: '...',
+        extra: {}
+    };
+    let inline_keyboard = [];
+
+    if (step === 'name') {
+        message.text = i18n.t(lang, 'enterBotName_message');
+    } else if (step === 'fiat') {
+        message.text = i18n.t(lang, 'enterCurrency_message');
+    } else if (step === 'coin') {
+        message.text = i18n.t(lang, 'enterCoin_message');
+    } else if (step === 'maxOrder') {
+        message.text = i18n.t(lang, 'enterMaxOrder_message');
+    } else if (step === 'minOrder') {
+        message.text = i18n.t(lang, 'enterMinOrder_message');
+    } else if (step === 'priceType') {
+        message.text = i18n.t(lang, 'choosePriceType_message');
+        inline_keyboard = [
+            [{ text: i18n.t(lang, 'price_button'), callback_data: 'set-priceType-price' }],
+            [{ text: i18n.t(lang, 'diff_button'), callback_data: 'set-priceType-diff' }]
+        ];
+    } else if (step === 'targetPrice') {
+        const target = (data['priceType']) ? data['priceType'] : 'diff';
+        message.text = i18n.t(lang, `enterTarget${target}_message`);
+    } else if (step === 'colCreateOrders') {
+        message.text = i18n.t(lang, 'enterColCreateOrders_message');
+    } else if (step === 'createBot') {
+        message.text = i18n.t(lang, 'confirmCreationBot_message', data);
+        inline_keyboard = [
+            [{ text: i18n.t(lang, 'accept_button'), callback_data: 'accept' }]
+        ];
+    }
+
+    inline_keyboard[inline_keyboard.length] = [
+        { text: i18n.t(lang, 'back_button'), callback_data: 'back' }
+    ];
+
+    message.extra = {
+        reply_markup: {
+            inline_keyboard
+        }
+    };
+
+    return message;
+};
+
+const payMethods = (lang, data, page, length, message_id = null) => {
+    const size = 5;
+    const message = {
+        type: (message_id) ? 'edit_text' : 'text',
+        message_id,
+        text: i18n.t(lang, 'choosePayMethods_message'),
+        extra: {}
+    };
+
+    const temp = [];
+
+    const startIndex = page * size;
+
+    for (let i = startIndex; i < startIndex + size; i++) {
+        temp[temp.length] = [{
+            text: (data[i].isAdded ? '✅' : '') + data[i].title,
+            callback_data: `payMethod-${page}-${i}`
+        }];
+    }
+
+    message.extra = {
+        reply_markup: {
+            inline_keyboard: [
+                ...temp,
+                ...paginations(lang, data, page, length, size),
+                [{ text: i18n.t(lang, 'accept_button'), callback_data: 'set-payMethods-0' }],
+                [{ text: i18n.t(lang, 'back_button'), callback_data: 'back' }]
+            ]
+        }
+    };
+
+    return message;
+};
+
+const menuAPIKeys = (lang, message_id = null) => {
+    const message = {
+        type: (message_id) ? 'edit_text' : 'text',
+        message_id,
+        text: i18n.t(lang, 'menuAPIKeys_message', {
+            instruction: i18n.t(lang, 'instruction_url')
+        }),
+        extra: {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: i18n.t(lang, 'addKey_button'), callback_data: 'add-api_keys' }],
+                    [{ text: i18n.t(lang, 'selectKey_button'), callback_data: 'select-api_keys' }],
+                    [{ text: i18n.t(lang, 'back'), callback_data: 'back' }]
+                ]
+            }
+        }
+    };
+
+    return message;
+};
+
+const addAPIKeys = (lang, step, data, message_id = null) => {
+    const message = {
+        type: (message_id) ? 'edit_text' : 'text',
+        message_id,
+        text: i18n.t(lang, 'addAPIKeys_message'),
+        extra: {}
+    };
+    let inline_keyboard = [];
+
+    if (step === 'name') {
+        message.text = i18n.t(lang, 'enterAPIKeyName_message');
+    } else if (step === 'api') {
+        message.text = i18n.t(lang, 'enterAPIKey_message');
+    } else if (step === 'secret') {
+        message.text = i18n.t(lang, 'enterAPISecret_message');
+    } else {
+        inline_keyboard = [
+            [{
+                text: i18n.t(lang, 'accept_button'),
+                callback_data: 'accept'
+            }],
+            [{
+                text: i18n.t(lang, 'enterAPIKeyName_button'),
+                callback_data: 'choose-name'
+            }],
+            [{
+                text: i18n.t(lang, 'enterAPIKey_button', { isAdded: (data['api']) ? '✅' : '❌' }),
+                callback_data: 'choose-api'
+            }],
+            [{
+                text: i18n.t(lang, 'enterAPISecret_button', { isAdded: (data['secret']) ? '✅' : '❌' }),
+                callback_data: 'choose-secret'
+            }]
+        ];
+    }
+
+    inline_keyboard[inline_keyboard.length] = [{ text: i18n.t(lang, 'back_button'), callback_data: 'back' }];
+
+    message.extra = {
+        reply_markup: {
+            inline_keyboard
+        }
+    };
+
+    return message;
+};
+
+const APIKeysAdded = (lang) => {
+    const message = {
+        type: 'text',
+        text: i18n.t(lang, 'APIKeysAdded_message'),
+        extra: {}
+    };
+
+    return message;
+};
+
+const userIdIsAlreadyUse = (lang) => {
+    const message = {
+        type: 'cb',
+        text: i18n.t(lang, 'userIdIsAlredyUse_message'),
+        extra: {
+            show_alert: true
+        }
+    };
+
+    return message;
+};
+
+const APIKeysIsNotCorrect = (lang) => {
+    const message = {
+        type: 'cb',
+        text: i18n.t(lang, 'APIKeysIsNotCorrect_message'),
+        extra: {
+            show_alert: true
+        }
+    };
+
+    return message;
+};
+
 const userStatus = (lang, user) => {
     const message = {
         type: 'text',
@@ -352,11 +701,23 @@ const botError = (lang, data, error) => {
     return message;
 };
 
+const notCorrectData = (lang, key = 'default') => {
+    const message = {
+        type: 'text',
+        text: i18n.t(lang, `${key}NotCorrectData_message`),
+        extra: {}
+    };
+
+    return message;
+};
+
 module.exports = {
     start,
     menu,
+    startTrial3days,
     trial3days,
-    trial3daysSettings,
+    startTrial3orders,
+    trial3orders,
     subscribeChannels,
     remind,
     subIsEnd1DayRemind,
@@ -367,9 +728,18 @@ module.exports = {
     order,
     orderCollapse,
     orderExpand,
+    botSettings,
+    botSettingsType,
+    payMethods,
+    menuAPIKeys,
+    addAPIKeys,
+    APIKeysAdded,
+    userIdIsAlreadyUse,
+    APIKeysIsNotCorrect,
     userStatus,
     adminMenu,
     addProxies,
     proxiesIsAdded,
-    botError
+    botError,
+    notCorrectData
 }

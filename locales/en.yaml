@@ -46,6 +46,31 @@ You have chosen ${currency} as your currency. All orders in ${currency} will now
 <b>Attention</b>: the number of orders per day depends on market activity. You just have to wait for new notifications.'
 marketIsTooSmall_message: 'Market for <b>${currency}</b> is too small, please choose other currency.'
 
+trial3orders_message: '<b>🌟 Welcome to the trial version! You are given a trial version including 3 free orders.</b> To get started, you’ll need to add your Binance API keys.
+
+
+🔑 Add your API keys easily: simply click the button below to begin the process of adding your API key and secret key. This secure setup will allow you to integrate your Binance account and start trading immediately.
+
+
+Ready to get started? Click the button and unlock your trading potential! 🚀'
+
+missingBinanceAPIKeys_message: '<b>🔑 Missing Binance API Keys</b>
+
+Unfortunately, we cannot find your Binance API keys. To start using the bot, you need to add these keys. They ensure a secure connection between the bot and your Binance account.
+
+
+<b>👇 Please add your API keys using the button below.</b>'
+
+addBinanceAPIKeys_message: '<b>🔑 Add Your Binance API Key</b>
+
+To enable seamless integration with your Binance account, please add your API key. This will allow the bot to perform trading operations on your behalf securely.
+
+
+🔧 How to add a new key: <a href="${instruction}">Instruction</a>
+
+
+🛡️ Security Tip: Never share your API keys with anyone. They are crucial for maintaining the security of your trading operations.'
+
 subscribeChannels_message: 'To continue enjoying our bot’s services, please subscribe to our channel. This will keep you updated with the latest features, tips, and important announcements.'
 
 startRemind_message: '🚀 Begin Your Experience Now! Dive into our platform’s features by selecting an option from the menu.'
@@ -59,6 +84,9 @@ Don’t miss out on the opportunity to enhance your experience! Let’s get star
 currencyRemind_message: '💹 Choose Your Currency Now!
 
 Please make your selection to continue enjoying our services tailored just for you.'
+APIKeysRemind_message: '⏳ API Key Addition Reminder
+
+We noticed you started adding your API Key but haven’t completed the process yet. Completing this step is essential for activating and utilizing the full functionalities of our service.'
 subscribeRemind_message: '🔗 Subscribe to Start Your Trial
 
 Click the button below to subscribe and gain immediate access to the trial. This is where your enhanced trading journey begins!
@@ -138,6 +166,72 @@ delay: ${delay}
 
 response: ${response}'
 
+botSettings_message: '<b>⚙️ Settings Menu</b>
+
+For optimal bot operation, please ensure that you have entered all necessary data in the following settings sections:'
+
+enterBotName_message: '📝 Please Enter name for your Bot:'
+enterCoin_message: '📝 Please Enter Coin:'
+enterMaxOrder_message: '📝 Please Enter Max amount:'
+enterMinOrder_message: '📝 Please Enter Min amount:'
+enterTargetprice_message: '📝 Please Enter Target price:'
+enterTargetdiff_message: '📝 Please Enter Target diff (from 1 to 100):'
+enterColCreateOrders_message: '📝 Please Enter number of orders to create:'
+
+confirmCreationBot_message: 'Confirm creation bot?
+
+Name: ${name}
+
+Fiat: ${fiat}
+
+Pay Methods: ${payMethods}
+
+Coin: ${coint}
+
+Max amount: ${maxOrder}
+
+Min amount: ${minOrder}
+
+Target ${priceType}: ${targetPrice}
+
+Number of orders to create: ${colCreateOrders}'
+
+menuAPIKeys_message: '<b>🔐 Binance API Key Menu</b>
+
+In this section, you can manage your API keys to ensure connectivity between the bot and your Binance account.
+
+
+<b>Available Options:
+
+- Add New API Key — Enter your new API key and secret key for integration.
+
+- Select Existing Key — Review and choose from a list of previously added keys.
+
+
+🔧 How to add a new key: <a href="${instruction}">Instruction</a>
+
+🔍 Be Cautious! Never share your API keys. They provide access to your account and can be used to manage your assets.
+
+
+👇 Use the buttons below to add or select a key.</b>'
+
+addAPIKeys_message: '<b>🔑 API Key Selected</b>
+
+You have selected the API key option. Please enter the details of your key below, corresponding to each button.'
+
+enterAPIKeyName_message: '<b>🔑 Key Name Information</b>
+
+The "Key Name" is a label you create to easily identify this particular API key among others. It’s just a nickname to help you distinguish between different keys you may have set up.
+
+📝 Please Enter Key Name'
+enterAPIKey_message: '📝 Please Enter Api Key:'
+enterAPISecret_message: '📝 Please Enter Secret Key:'
+
+APIKeysAdded_message: '🔑 API Key Created Successfully!'
+
+userIdIsAlreadyUse_message: 'UserId is alredy use'
+APIKeysIsNotCorrect_message: '🚫 Invalid API Key'
+
 youNotSubscribeToChannel_message: 'You need to join the channel'
 
 adminMenu_message: 'Admin menu'
@@ -166,6 +260,11 @@ Error:
 
 <code>${error}</code>'
 
+maxOrderNotCorrectData_message: 'Not correct: only numbers'
+minOrderNotCorrectData_message: 'Not correct: only numbers'
+targetPriceNotCorrectData_message: 'Not correct: only numbers'
+colCreateOrdersNotCorrectData_message: 'Not correct: only numbers'
+
 startTrial_button: '🎉Start Your Free Trial!'
 buySub_button: '💸Buy subscription'
 information_button: '📖Information'
@@ -176,14 +275,36 @@ start_button: 'Start'
 
 checkSubscribe_button: 'I have subscribed'
 
+addAPIKey_button: '➕ Add API Key'
+addAPIKeys_button: '➕ Add API Keys'
+addKey_button: '➕ Add key'
+selectKey_button: '🔖Select key'
+
+enterAPIKeyName_button: 'Key name'
+enterAPIKey_button: 'API key ${isAdded}'
+enterAPISecret_button: 'Secret key ${isAdded}'
+
 expand_button: 'Expand'
 collapse_button: 'Collapse'
+
+botName_button: 'Bot name ${data}'
+fiat_button: 'Fiat ${data}'
+payMethods_button: '${isLock} Pay Methods ${data}'
+coin_button: '${isLock} Coin ${data}'
+maxOrder_button: '${isLock} Max amount ${data}'
+minOrder_button: '${isLock} Min amount ${data}'
+priceType_button: '${isLock} Target: ${data}'
+targetPrice_button: '${isLock} Target price/percent ${data}'
+colCreateOrders_button: '${isLock} Max num orders ${data}'
+takeMaxOrder_button: '${isLock} Take Full bank orders ${data}'
+APIKeys_button: '${isLock} API Key'
 
 addAdmin_button: 'Add admin'
 addProxies_button: 'Add proxies'
 addKeys_button: 'Add API keys'
 startBots_button: 'Start bots'
 
+accept_button: '✅ Accept'
 proceed_button: 'Proceed'
 back_button: 'Back'
 cancel_button: 'Cancel'
@@ -194,3 +315,5 @@ unsuccess_status: '🔴 UNSUCCESS'
 limits_status: '🟡 inappropriate amount'
 
 user_url: '<a href="tg://user?id=${id}">${username}</a>'
+
+instruction_url: 'https://t.me/'

@@ -35,6 +35,9 @@ const admin = require('./scenes/admin');
 
 const stage = new Stage([
     profile.start3daysTrial(),
+    profile.start3ordersTrial(),
+    profile.botSettings(),
+    profile.addAPIKeys(),
     admin.adminMenu()
 ]);
 
