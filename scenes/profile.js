@@ -27,6 +27,10 @@ const SETTINGS_STEPS = [
     'createBot'
 ];
 
+const SET_REG = /set-(fiat|payMethods|coin|priceType)-([A-Za-z0-9]+)/g;
+const PAYMETHOD_REG = /payMethod-([0-9a-z]+)-([0-9a-z]+)/g;
+const NEXT_REG = /next-(payMethods)-([0-9]+)/g;
+
 const trialLeave = async (ctx) => {
     const { user } = ctx.state;
 
@@ -44,9 +48,58 @@ const trialLeave = async (ctx) => {
     return await ctx.scene.leave();
 };
 
+const checkFiat = async (user, text) => {
+    const currencies = await BinanceService.getFiatsList();
+    const currency = text.toUpperCase();
+
+    let isSuccess = false, message = null;
+
+    if (currencies.includes(currency)) {
+        const check = await BinanceService.getPrice(currency);
+
+        if (check) {
+            isSuccess = true;
+        } else {
+            message = messages.marketIsTooSmall(user.lang);
+        }
+    } else {
+        const similar = helper.checkFiat(currencies, currency);
+
+        message = messages.incorrectCurrency(user.lang, similar);
+    }
+
+    return {
+        isSuccess,
+        currency,
+        message
+    };
+};
+
+const checkCoin = async (user, fiat, text) => {
+    const coins = await BinanceService.getCoinsList(fiat);
+    const coin = text.toUpperCase();
+
+    let isSuccess = false, message = null;
+
+    if (coins.includes(coin)) {
+        isSuccess = true;
+    } else {
+        const similar = helper.checkFiat(coins, coin);
+
+        message = messages.incorrectCoin(user.lang, similar);
+    }
+
+    return {
+        isSuccess,
+        coin,
+        message
+    };
+};
+
 const getPayMethods = async (ctx) => {
     const { user } = ctx.state;
-    const { message_id } = ctx.update.callback_query.message;
+    const { message_id } = (ctx.update.callback_query) ?
+        ctx.update.callback_query.message : { message_id: null };
     const { data } = ctx.scene.state;
 
     if (data['fiat']) {
@@ -73,6 +126,57 @@ const getPayMethods = async (ctx) => {
         }
     } else {
         await ctx.answerCbQuery(ctx.i18n.t('firstAddFiat_message'), true);
+    }
+};
+
+const addPayMethod = async (ctx) => {
+    const { user } = ctx.state;
+    const { message_id } = ctx.update.callback_query.message;
+    const { payMethods } = ctx.scene.state;
+
+    let page = Number(ctx.match[1]);
+    let index = Number(ctx.match[2]) ?
+        Number(ctx.match[2]) : ctx.match[2];
+
+    if (index === 'all') {
+        ctx.scene.state.payMethods = payMethods.reduce((acc, el) => {
+            acc[acc.length] = {
+                title: el.title,
+                isAdded: true
+            };
+            return acc;
+        }, []);
+    } else {
+        ctx.scene.state.payMethods[index].isAdded = !payMethods[index].isAdded;
+    }
+
+    const message = messages.payMethods(user.lang, ctx.scene.state.payMethods, page, ctx.scene.state.payMethods.length, message_id);
+
+    sender.enqueue({
+        chat_id: ctx.from.id,
+        message
+    });
+};
+
+const nextMessage = async (ctx) => {
+    const { user } = ctx.state;
+    const { message_id } = ctx.update.callback_query.message;
+    const { payMethods } = ctx.scene.state;
+
+    const key = ctx.match[1];
+    const page = Number(ctx.match[2]);
+
+    let message = null;
+
+    if (key === 'payMethods') {
+        message = messages.payMethods(user.lang, payMethods, page, payMethods.length, message_id);
+    }
+
+    if (message) {
+        sender.enqueue({
+            chat_id: ctx.from.id,
+            message
+        });
     }
 };
 
@@ -282,10 +386,9 @@ function botSettings() {
         });
     });
 
-    settings.action(/set-(fiat|payMethods)-([A-Z]+)/, async (ctx) => {
+    settings.action(SET_REG, async (ctx) => {
         const { user } = ctx.state;
         const { message_id } = ctx.update.callback_query.message;
-        const { payMethods } = ctx.scene.state;
 
         const key = ctx.match[1];
         const value = ctx.match[2];
@@ -300,21 +403,11 @@ function botSettings() {
 
             await ctx.replyWithHTML(fiat_message.text, fiat_message.extra);
         } else if (key === 'payMethods') {
-            update[key] = payMethods.reduce((acc, el, index) => {
-                if (index === 0) {
-                    acc += '[';
-                }
+            const { payMethods } = ctx.scene.state;
 
-                acc += el.title;
-
-                if (index < payMethods.length - 1) {
-                    acc += ',';
-                } else {
-                    acc += ']';
-                }
-
-                return acc;
-            }, '');
+            update[key] = helper.setPayMethods(payMethods);
+        } else {
+            update[key] = value;
         }
 
         if (update) {
@@ -331,22 +424,8 @@ function botSettings() {
         await getPayMethods(ctx);
     });
 
-    settings.action(/payMethod-([0-9]+)-([0-9]+)/, async (ctx) => {
-        const { user } = ctx.state;
-        const { message_id } = ctx.update.callback_query.message;
-        const { payMethods } = ctx.scene.state;
-
-        const page = Number(ctx.match[1]);
-        const index = Number(ctx.match[2]);
-
-        ctx.scene.state.payMethods[index].isAdded = !payMethods[index].isAdded;
-
-        const message = messages.payMethods(user.lang, payMethods, page, payMethods.length, message_id);
-
-        sender.enqueue({
-            chat_id: ctx.from.id,
-            message
-        });
+    settings.action(PAYMETHOD_REG, async (ctx) => {
+        await addPayMethod(ctx);
     });
 
     settings.action(/(add|menu)-(api_keys)/, async (ctx) => {
@@ -369,6 +448,10 @@ function botSettings() {
                 bot_id: data.id
             });
         }
+    });
+
+    settings.action(NEXT_REG, async (ctx) => {
+        await nextMessage(ctx);
     });
 
     settings.action('back', async (ctx) => {
@@ -394,35 +477,30 @@ function botSettings() {
         const { text } = ctx.message;
         const text_num = Number(text);
 
-        let response_message = null,
+        let message = null,
             update = {}, isUpdate = false;
 
         if (step === 'name') {
             isUpdate = true;
             update[step] = text;
         } else if (step === 'fiat') {
-            const currencies = await BinanceService.getFiatsList();
-            const currency = text.toUpperCase();
+            const check = await checkFiat(user, text);
 
-            if (currencies.includes(currency)) {
-                const check = await BinanceService.getPrice(currency);
-
-                if (check) {
-                    isUpdate = true;
-                    update[step] = currency;
-                    update['payMethods'] = '[]';
-                } else {
-                    response_message = messages.marketIsTooSmall(user.lang);
-                }
-            } else {
-                const similar = helper.checkFiat(currencies, currency);
-
-                response_message = messages.incorrectCurrency(user.lang, similar);
+            if (check.isSuccess) {
+                isUpdate = true;
+                update[step] = check.currency;
+                update['payMethods'] = '[]';
             }
+
+            message = check.message;
         } else if (user.registrationStatus === 'subscription') {
             if (step === 'coin') {
-                isUpdate = true;
-                update[step] = text;
+                const check = await checkCoin(user, text, data['fiat']);
+
+                if (check.isSuccess) {
+                    isUpdate = true;
+                    update[step] = check.coin;
+                }
             } else if (text_num &&
                 (step === 'maxOrder' ||
                 step === 'minOrder' ||
@@ -451,13 +529,13 @@ function botSettings() {
         } else if (step && isUpdate) {
             ctx.scene.state.data = await botDBService.update({ id: data.id }, update, 'after');
 
-            response_message = messages.botSettings(user.lang, user, ctx.scene.state.data, null);
+            message = messages.botSettings(user.lang, user, ctx.scene.state.data, null);
         }
 
-        if (response_message) {
+        if (message) {
             sender.enqueue({
                 chat_id: ctx.from.id,
-                message: response_message
+                message
             });
         }
     });
@@ -629,11 +707,12 @@ function createBot() {
 
     create_bot.enter(async (ctx) => {
         const { user } = ctx.state;
+        const { message_id } = ctx.scene.state;
 
         ctx.scene.state.step = 0;
         ctx.scene.state.data = {};
 
-        const message = messages.botSettingsType(user.lang, SETTINGS_STEPS[ctx.scene.state.step]);
+        const message = messages.botSettingsType(user.lang, SETTINGS_STEPS[ctx.scene.state.step], ctx.scene.state.data, message_id);
 
         sender.enqueue({
             chat_id: ctx.from.id,
@@ -641,15 +720,60 @@ function createBot() {
         });
     });
 
+    create_bot.action(PAYMETHOD_REG, async (ctx) => {
+        await addPayMethod(ctx);
+    });
+
+    create_bot.action(SET_REG, async (ctx) => {
+        const { user } = ctx.state;
+        const { message_id } = ctx.update.callback_query.message;
+
+        const key = ctx.match[1];
+        const value = ctx.match[2];
+
+        ctx.scene.state.step++;
+
+        if (key === 'fiat') {
+            ctx.scene.state.data[key] = value;
+            ctx.scene.state.data['payMethods'] = '[]';
+
+            const fiat_message = messages.trial3days(user.lang, 1, ctx.scene.state.data);
+
+            await ctx.deleteMessage();
+            await ctx.replyWithHTML(fiat_message.text, fiat_message.extra);
+        } else if (key === 'payMethods') {
+            const { payMethods } = ctx.scene.state;
+
+            ctx.scene.state.data[key] = helper.setPayMethods(payMethods);
+        } else {
+            ctx.scene.state.data[key] = value;
+        }
+
+
+        if (ctx.scene.state.step === 2) {
+            await getPayMethods(ctx);
+        } else {
+            sender.enqueue({
+                chat_id: ctx.from.id,
+                message: messages.botSettingsType(user.lang, SETTINGS_STEPS[ctx.scene.state.step], ctx.scene.state.data, message_id)
+            });
+        }
+    });
+
+    create_bot.action(NEXT_REG, async (ctx) => {
+        await nextMessage(ctx);
+    });
+
     create_bot.action('accept', async (ctx) => {
         const { user } = ctx.state;
+        const { data } = ctx.scene.state;
 
-        const create = await BotService.createBot(user, type);
+        const create = await BotService.createBot(user, 'personal', data);
 
         let message = null;
 
         if (create.isSuccess) {
-            
+            console.log(create)
         } else {
             message = messages.botError(user.lang, create.bot, create.response);
         }
@@ -698,18 +822,46 @@ function createBot() {
         if (step !== 2 && step !== 6) {
             const type = SETTINGS_STEPS[step];
 
-            let message = messages.notCorrectData(user.lang, type);
+            let isSuccess = false,
+                message = messages.notCorrectData(user.lang, type);
 
             if (step < 4) {
-                ctx.scene.state.data[type] = text;
+                if (step === 1) {
+                    const check = await checkFiat(user, text);
+
+                    isSuccess = check.isSuccess;
+                    message = check.message;
+
+                    if (isSuccess) {
+                        ctx.scene.state.data['fiat'] = check.currency;
+                        ctx.scene.state.data['payMethods'] = '[]';
+                    }
+                } else if (step === 3) {
+                    const check = await checkCoin(user, data['fiat'], text);
+
+                    isSuccess = check.isSuccess;
+                    message = check.message;
+
+                    if (isSuccess) {
+                        ctx.scene.state.data['coin'] = check.coin;
+                    }
+                } else {
+                    isSuccess = true;
+                    ctx.scene.state.data[type] = (step === 2) ? '[' + text + ']' : text;
+                }
             } else if (step > 3 && text_num) {
                 if (step === 7) {
                     if (data['priceType'] === 'diff' && text_num > 0 && text_num <= 100) {
+                        isSuccess = true;
                         ctx.scene.state.data[type] = text_num / 100;
                     } else if (data['priceType'] === 'price') {
+                        isSuccess = true;
                         ctx.scene.state.data[type] = text_num;
+                    } else {
+                        message = messages.notCorrectData(user.lang, data['priceType']);
                     }
-                } else {
+                } else if (step === 5 && text_num < data['maxOrder'] || step !== 5) {
+                    isSuccess = true;
                     ctx.scene.state.data[type] = text_num;
                 }
             }
@@ -717,11 +869,15 @@ function createBot() {
             if (isSuccess) {
                 ctx.scene.state.step++;
 
-                message = messages.botSettingsType(user.lang, SETTINGS_STEPS[step], ctx.scene.state.data);
+                if (ctx.scene.state.step === 2) {
+                    return await getPayMethods(ctx);
+                } else {
+                    message = messages.botSettingsType(user.lang, SETTINGS_STEPS[ctx.scene.state.step], ctx.scene.state.data);
+                }
             }
 
             sender.enqueue({
-                chat_it: ctx.from.id,
+                chat_id: ctx.from.id,
                 message
             });
         }

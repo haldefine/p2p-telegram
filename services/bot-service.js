@@ -7,32 +7,34 @@ const {
 } = require('./db');
 
 class BotService {
-    async createBot(creator, name, data = null) {
+    async createBot(creator, type, data = null) {
         const admins = await userDBService.getAll({ role: 'admin' });
         const assignedToUser = admins.map(admin => admin.tg_id);
 
         let newBot = (data) ?
-        {
-            ...data,
-            assignedToUser,
-            use_order_key: '',
-            search_keys: [],
-            order_keys: []
-        } : {
-            name,
-            assignedToUser,
-            fiat: creator.currency,
-            use_order_key: '',
-            search_keys: [],
-            order_keys: []
-        };
+            {
+                type,
+                ...data,
+                assignedToUser,
+                use_order_key: '_',
+                search_keys: [],
+                order_keys: []
+            } : {
+                type,
+                name: type,
+                assignedToUser,
+                fiat: creator.currency,
+                use_order_key: '',
+                search_keys: [],
+                order_keys: []
+            };
 
         if (!assignedToUser.includes(creator.tg_id)) {
             assignedToUser.push(creator.tg_id);
         }
 
-        if (name === '3days' || name === '3orders') {
-            const req = (name === '3days') ?
+        if (type === '3days' || type === '3orders') {
+            const req = (type === '3days') ?
                 {
                     $expr: { $lt: [{ $size: '$bot_id' }, 2] }
                 } :
@@ -42,12 +44,12 @@ class BotService {
                 };
             const keys = await keyDBService.getAll(req, {}, {}, 1);
 
-            if (name === '3orders') {
+            if (type === '3orders') {
                 newBot.maxOrder = 100;
             }
 
             if (keys[0]) {
-                newBot.use_order_key = name;
+                newBot.use_order_key = data.name;
                 newBot = keys.reduce((acc, el) => {
                     acc.order_keys[acc.order_keys.length] = {
                         name,

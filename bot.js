@@ -38,6 +38,7 @@ const stage = new Stage([
     profile.start3ordersTrial(),
     profile.botSettings(),
     profile.addAPIKeys(),
+    profile.createBot(),
     admin.adminMenu()
 ]);
 

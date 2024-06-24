@@ -15,22 +15,22 @@ const i18n = new TelegrafI18n({
 
 const DELETE_DELAY = 10000;
 
-const paginations = (lang, data, page, length, size = 5) => {
+const paginations = (lang, data, page, length, key, size = 5) => {
     let inline_keyboard = [];
 
     if (data.length > 0) {
-        if (page > 1 && page * size < length) {
+        if (page > 0 && page * size < length) {
             inline_keyboard = [
-                { text: i18n.t(lang, 'back_button'), callback_data: `next-${page - 1}` },
-                { text: i18n.t(lang, 'next_button'), callback_data: `next-${page + 1}` }
+                { text: i18n.t(lang, 'back_button'), callback_data: `next-${key}-${page - 1}` },
+                { text: i18n.t(lang, 'next_button'), callback_data: `next-${key}-${page + 1}` }
             ];
-        } else if (page === 1 && page * size < length) {
+        } else if (page === 0 && page * size < length) {
             inline_keyboard = [
-                { text: i18n.t(lang, 'next_button'), callback_data: `next-${page + 1}` }
+                { text: i18n.t(lang, 'next_button'), callback_data: `next-${key}-${page + 1}` }
             ];
-        } else if (page > 1) {
+        } else if (page > 0) {
             inline_keyboard = [
-                { text: i18n.t(lang, 'back_button'), callback_data: `next-${page - 1}` }
+                { text: i18n.t(lang, 'back_button'), callback_data: `next-${key}-${page - 1}` }
             ];
         }
     }
@@ -260,6 +260,27 @@ const incorrectCurrency = (lang, currencies, message_id = null) => {
     return message;
 };
 
+const incorrectCoin = (lang, coins, message_id = null) => {
+    const message = {
+        type: (message_id) ? 'edit_text' : 'text',
+        message_id,
+        text: i18n.t(lang, 'incorrectCoin_message', {
+            coins: coins.join(',')
+        }),
+        extra: {
+            reply_markup: {
+                inline_keyboard: coins.reduce((acc, el) => {
+                    acc[acc.length] = [{ text: el, callback_data: `set-coin-${el}` }];
+
+                    return acc;
+                }, [])
+            }
+        }
+    };
+
+    return message;
+};
+
 const marketIsTooSmall = (lang, currency) => {
     const message = {
         type: 'text',
@@ -467,9 +488,11 @@ const botSettingsType = (lang, step, data, message_id = null) => {
         ];
     }
 
-    inline_keyboard[inline_keyboard.length] = [
-        { text: i18n.t(lang, 'back_button'), callback_data: 'back' }
-    ];
+    if (step !== 'name') {
+        inline_keyboard[inline_keyboard.length] = [
+            { text: i18n.t(lang, 'back_button'), callback_data: 'back' }
+        ];
+    }
 
     message.extra = {
         reply_markup: {
@@ -495,7 +518,7 @@ const payMethods = (lang, data, page, length, message_id = null) => {
 
     for (let i = startIndex; i < startIndex + size; i++) {
         temp[temp.length] = [{
-            text: (data[i].isAdded ? '✅' : '') + data[i].title,
+            text: (data[i].isAdded ? '✅ ' : '') + data[i].title,
             callback_data: `payMethod-${page}-${i}`
         }];
     }
@@ -503,10 +526,11 @@ const payMethods = (lang, data, page, length, message_id = null) => {
     message.extra = {
         reply_markup: {
             inline_keyboard: [
+                [{ text: i18n.t(lang, 'chooseAllPayMethods_button'), callback_data: `payMethod-${page}-all` }],
                 ...temp,
-                ...paginations(lang, data, page, length, size),
-                [{ text: i18n.t(lang, 'accept_button'), callback_data: 'set-payMethods-0' }],
-                [{ text: i18n.t(lang, 'back_button'), callback_data: 'back' }]
+                [{ text: i18n.t(lang, 'accept_button'), callback_data: 'set-payMethods-accept' }],
+                [...paginations(lang, data, page, length, 'payMethods', size)],
+                [{ text: i18n.t(lang, 'cancel_button'), callback_data: 'back' }]
             ]
         }
     };
@@ -722,6 +746,7 @@ module.exports = {
     remind,
     subIsEnd1DayRemind,
     incorrectCurrency,
+    incorrectCoin,
     marketIsTooSmall,
     orderTextForUser,
     orderTextForAdmin,

@@ -139,9 +139,19 @@ const cb = async (ctx, next) => {
 
             deleteRemind = true;
 
-            response_message = (user.registrationStatus === '3days') ?
-                messages.startTrial3days(user.lang, message_id) :
-                messages.startTrial3orders(user.lang, message_id);
+            if (user.registrationStatus === 'subscription') {
+                const bots = await botDBService.getCount({ tg_id: ctx.from.id });
+
+                if (bots === 0) {
+                    await ctx.scene.enter('create_bot', {
+                        message_id
+                    });
+                }
+            } else if (user.registrationStatus !== 'free') {
+                response_message = (user.registrationStatus === '3days') ?
+                    messages.startTrial3days(user.lang, message_id) :
+                    messages.startTrial3orders(user.lang, message_id);
+            }
         } else if (match[0] === '3days') {
             if (user.registrationStatus === '3days') {
                 clearTimeout(ctx.session.remindTimerId);

@@ -103,6 +103,10 @@ incorrectCurrency_message: '⚠️ Incorrect Currency Entered. It looks like the
 
 
 🔍 Similar Currencies Based on Your Entry: <b>${currencies}</b>'
+incorrectCoin_message: '⚠️ Incorrect Coin Entered. It looks like there might have been an error in the coin you entered.
+
+
+🔍 Similar Coins Based on Your Entry: <b>${coins}</b>'
 
 order_message: 'Status: ${status}
 
@@ -171,9 +175,13 @@ botSettings_message: '<b>⚙️ Settings Menu</b>
 For optimal bot operation, please ensure that you have entered all necessary data in the following settings sections:'
 
 enterBotName_message: '📝 Please Enter name for your Bot:'
+choosePayMethods_message: '<b>💳 Select Your Bank for Payment</b>
+
+Please choose a bank from the list below to proceed with your payment. Selecting the right bank will ensure a smooth and secure transaction process.'
 enterCoin_message: '📝 Please Enter Coin:'
 enterMaxOrder_message: '📝 Please Enter Max amount:'
 enterMinOrder_message: '📝 Please Enter Min amount:'
+choosePriceType_message: '☑️ Choose Target Price Type:'
 enterTargetprice_message: '📝 Please Enter Target price:'
 enterTargetdiff_message: '📝 Please Enter Target diff (from 1 to 100):'
 enterColCreateOrders_message: '📝 Please Enter number of orders to create:'
@@ -186,7 +194,7 @@ Fiat: ${fiat}
 
 Pay Methods: ${payMethods}
 
-Coin: ${coint}
+Coin: ${coin}
 
 Max amount: ${maxOrder}
 
@@ -260,9 +268,11 @@ Error:
 
 <code>${error}</code>'
 
+defaultNotCorrectData_message: 'Not correct data'
 maxOrderNotCorrectData_message: 'Not correct: only numbers'
-minOrderNotCorrectData_message: 'Not correct: only numbers'
-targetPriceNotCorrectData_message: 'Not correct: only numbers'
+minOrderNotCorrectData_message: 'Not correct: amount must be small than max amount'
+diffNotCorrectData_message: 'Not correct: numbers must be from 1 to 100 %'
+priceNotCorrectData_message: 'Not correct: only numbers'
 colCreateOrdersNotCorrectData_message: 'Not correct: only numbers'
 
 startTrial_button: '🎉Start Your Free Trial!'
@@ -304,8 +314,15 @@ addProxies_button: 'Add proxies'
 addKeys_button: 'Add API keys'
 startBots_button: 'Start bots'
 
+chooseAllPayMethods_button: 'Choose All Pay Methods'
+
+diff_button: 'Diff'
+price_button: 'Price'
+
+all_button: 'All'
 accept_button: '✅ Accept'
 proceed_button: 'Proceed'
+next_button: 'Next'
 back_button: 'Back'
 cancel_button: 'Cancel'
 

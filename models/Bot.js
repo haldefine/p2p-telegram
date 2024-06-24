@@ -112,7 +112,8 @@ const OrderSchema = new Schema({
 
 const BotSchema = new Schema({
     type: {
-        type: String
+        type: String,
+        required: true
     }, // 3days || 3orders || personal
     name: {
         type: String,

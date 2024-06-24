@@ -35,17 +35,36 @@ const checkSubscribe = async (channels, user_id) => {
     return _;
 };
 
-const checkFiat = (data, currency) => data.reduce((acc, el) => {
-    if ((el[0] === currency[0] && el[1] === currency[1]) ||
-    (el[1] === currency[1] && el[2] === currency[2])) {
+const checkFiat = (data, _) => data.reduce((acc, el) => {
+    if ((el[0] === _[0] && el[1] === _[1]) ||
+    (el[1] === _[1] && el[2] === _[2])) {
         acc[acc.length] = el;
     }
 
     return acc;
 }, []);
 
+const setPayMethods = (data) => data.reduce((acc, el, index) => {
+    if (el.isAdded) {
+        if (index === 0) {
+            acc += '[';
+        }
+
+        acc += el.title;
+
+        if (index < data.length - 1) {
+            acc += ',';
+        } else {
+            acc += ']';
+        }
+    }
+
+    return acc;
+}, '');
+
 module.exports = {
     getChannels,
     checkSubscribe,
-    checkFiat
+    checkFiat,
+    setPayMethods
 }
