@@ -502,8 +502,8 @@ function botSettings() {
                     update[step] = check.coin;
                 }
             } else if (text_num &&
-                (step === 'maxOrder' ||
-                step === 'minOrder' ||
+                ((step === 'maxOrder' && text_num > data['minOrder']) ||
+                (step === 'minOrder' && text_num < data['maxOrder']) ||
                 step === 'colCreateOrders')) {
                     isUpdate = true;
                     update[step] = text_num;
