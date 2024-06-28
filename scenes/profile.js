@@ -7,11 +7,13 @@ const timer = require('../scripts/timer');
 
 const BinanceService = require('../services/binance-service');
 const BotService = require('../services/bot-service');
+const PaymentService = require('../services/payment-service');
 const { sender } = require('../services/sender');
 const {
     userDBService,
     keyDBService,
-    botDBService
+    botDBService,
+    promoDBService
 } = require('../services/db');
 
 const SETTINGS_STEPS = [
@@ -319,6 +321,396 @@ function start3ordersTrial() {
     return trial_3orders;
 }
 
+function addAPIKeys() {
+    const api_keys = new Scene('api_keys');
+
+    api_keys.use(middlewares.start);
+
+    api_keys.enter(async (ctx) => {
+        const { user } = ctx.state;
+        const {
+            bot_id,
+            message_id
+        } = ctx.scene.state;
+
+        ctx.scene.state.step = null;
+        ctx.scene.state.data = {
+            tg_id: ctx.from.id,
+            bot_id: (bot_id) ? [bot_id] : [],
+            name: Date.parse(new Date()),
+            isUse: (bot_id) ? true : false,
+            api: '',
+            secret: ''
+        };
+
+        const message = messages.addAPIKeys(user.lang, ctx.scene.state.step, ctx.scene.state.data, message_id);
+
+        sender.enqueue({
+            chat_id: ctx.from.id,
+            message
+        });
+    });
+
+    api_keys.action(/choose-(name|api|secret)/, async (ctx) => {
+        const { user } = ctx.state;
+        const { message_id } = ctx.update.callback_query.message;
+
+        ctx.scene.state.step = ctx.match[1];
+
+        const message = messages.addAPIKeys(user.lang, ctx.scene.state.step, {}, message_id);
+
+        sender.enqueue({
+            chat_id: ctx.from.id,
+            message
+        });
+    });
+
+    api_keys.action('accept', async (ctx) => {
+        const { user } = ctx.state;
+        const { message_id } = ctx.update.callback_query.message;
+        const {
+            bot_id,
+            data
+        } = ctx.scene.state;
+
+        let isLeave = false,
+            message = null,
+            update = null,
+            binanceUserId = await BinanceService.getUserIdentifier(data.api, data.secret);
+
+        if (binanceUserId) {
+            const check = await userDBService.get({ binanceUserIds: binanceUserId });
+
+            if (check) {
+                if (bot_id) {
+                    const search_keys = {
+                        api_key: data.api,
+                        secret_key: data.secret
+                    };
+                    const order_keys = {
+                        name: data.name,
+                        first_key: data.api,
+                        second_key: data.secret,
+                        isCookie: false
+                    };
+
+                    update = {
+                        use_order_key: data.name,
+                        $addToSet: {
+                            search_keys,
+                            order_keys
+                        }
+                    };
+                }
+
+                await keyDBService.create(data);
+
+                if (update) {
+                    await botDBService.update({ id: bot_id }, update);
+                }
+
+                isLeave = true;
+                message = messages.APIKeysAdded(user.lang, message_id);
+            } else {
+                message = messages.answerCbQuery(user.lang, 'userIdIsAlredyUse_message', true);
+            }
+        } else {
+            message = messages.answerCbQuery(user.lang, 'APIKeysIsNotCorrect_message', true);
+        }
+
+        if (isLeave) {
+            await ctx.replyWithHTML(message.text, message.extra);
+
+            if (user.registrationStatus === 'personal') {
+                if (bot_id) {
+                    await ctx.scene.enter('settings', {
+                        bot_id
+                    });
+                } else {
+                    await ctx.scene.enter('create_bot');
+                }
+            } else {
+                await ctx.scene.enter('trial_3days', {
+                    step: 0,
+                    data: {
+                        currency: null
+                    }
+                });
+            }
+        } else {
+            await ctx.answerCbQuery(message.text, message.extra.show_alert);
+        }
+    });
+
+    api_keys.action('back', async (ctx) => {
+        const { user } = ctx.state;
+        const { message_id } = ctx.update.callback_query.message;
+        const {
+            step,
+            bot_id
+        } = ctx.scene.state;
+
+        if (step) {
+            ctx.scene.state.step = null;
+
+            const message = messages.addAPIKeys(user.lang, ctx.scene.state.step, {}, message_id);
+
+            sender.enqueue({
+                chat_id: ctx.from.id,
+                message
+            });
+        } else if (bot_id) {
+            await ctx.scene.enter('settings', {
+                bot_id,
+                message_id
+            });
+        }
+    });
+
+    api_keys.on('text', async (ctx) => {
+        const { user } = ctx.state;
+        const { step } = ctx.scene.state;
+
+        const { text } = ctx.message;
+
+        if (step === 'name') {
+            ctx.scene.state.data[step] = text;
+        } else if (step === 'api') {
+            ctx.scene.state.data[step] = text;
+        } else if (step === 'secret') {
+            ctx.scene.state.data[step] = text;
+        }
+
+        const message = messages.addAPIKeys(user.lang, null, ctx.scene.state.data);
+
+        sender.enqueue({
+            chat_id: ctx.from.id,
+            message
+        });
+    });
+
+    return api_keys;
+}
+
+function createBot() {
+    const create_bot = new Scene('create_bot');
+
+    create_bot.use(middlewares.start);
+
+    create_bot.enter(async (ctx) => {
+        const { user } = ctx.state;
+        const { message_id } = ctx.scene.state;
+
+        ctx.scene.state.step = 0;
+        ctx.scene.state.data = {
+            type: 'personal'
+        };
+
+        const message = messages.botSettingsType(user.lang, SETTINGS_STEPS[ctx.scene.state.step], ctx.scene.state.data, message_id);
+
+        sender.enqueue({
+            chat_id: ctx.from.id,
+            message
+        });
+    });
+
+    create_bot.action(PAYMETHOD_REG, async (ctx) => {
+        await addPayMethod(ctx);
+    });
+
+    create_bot.action(SET_REG, async (ctx) => {
+        const { user } = ctx.state;
+        const { message_id } = ctx.update.callback_query.message;
+
+        const key = ctx.match[1];
+        const value = ctx.match[2];
+
+        ctx.scene.state.step++;
+
+        if (key === 'fiat') {
+            ctx.scene.state.data[key] = value;
+            ctx.scene.state.data['payMethods'] = '[]';
+
+            const fiat_message = messages.trial3days(user.lang, 1, ctx.scene.state.data);
+
+            await ctx.deleteMessage();
+            await ctx.replyWithHTML(fiat_message.text, fiat_message.extra);
+        } else if (key === 'payMethods') {
+            const { payMethods } = ctx.scene.state;
+
+            ctx.scene.state.data[key] = helper.setPayMethods(payMethods);
+        } else {
+            ctx.scene.state.data[key] = value;
+        }
+
+
+        if (ctx.scene.state.step === 2) {
+            await getPayMethods(ctx);
+        } else {
+            sender.enqueue({
+                chat_id: ctx.from.id,
+                message: messages.botSettingsType(user.lang, SETTINGS_STEPS[ctx.scene.state.step], ctx.scene.state.data, message_id)
+            });
+        }
+    });
+
+    create_bot.action(NEXT_REG, async (ctx) => {
+        await nextMessage(ctx);
+    });
+
+    create_bot.action('accept', async (ctx) => {
+        const { user } = ctx.state;
+        const { message_id } = ctx.update.callback_query.message;
+        const { data } = ctx.scene.state;
+
+        const channels = await helper.getChannels();
+        const subscriber = await helper.checkSubscribe(channels, ctx.from.id);
+
+        let isLeave = false,
+            isSuccess = false,
+            error = null,
+            message = null;
+
+        if (subscriber.isMember) {
+            const create = await BotService.createBot(user, data);
+
+            if (create.isSuccess) {
+                console.log(create)
+
+                const start = await BotService.startBot(create.bot.id);
+
+                if (start.isSuccess) {
+                    isSuccess = true;
+                } else {
+                    error = start.response;
+                }
+            } else {
+                error = create.response;
+            }
+
+            isLeave = true;
+
+            message = (isSuccess) ?
+                messages.botMenu(user.lang, user, start.bot, message_id) :
+                messages.botError(user.lang, create.bot, error);
+        } else {
+            message = messages.subscribeChannels(user.lang, channels, 'accept', message_id);
+        }
+
+        await ctx.deleteMessage();
+
+        if (message) {
+            sender.enqueue({
+                chat_id: ctx.from.id,
+                message
+            });
+        }
+
+        if (isLeave) {
+            await ctx.scene.leave();
+        }
+    });
+
+    create_bot.action('back', async (ctx) => {
+        const { user } = ctx.state;
+        const { message_id } = ctx.update.callback_query.message;
+        const { data } = ctx.scene.state;
+
+        if (ctx.scene.state.step > 0) {
+            ctx.scene.state.step--;
+        }
+
+        if (ctx.scene.state.step === 2) {
+            await getPayMethods(ctx);
+        } else {
+            const message = messages.botSettingsType(user.lang, SETTINGS_STEPS[ctx.scene.state.step], data, message_id);
+
+            sender.enqueue({
+                chat_id: ctx.from.id,
+                message
+            });
+        }
+    });
+
+    create_bot.on('text', async (ctx) => {
+        const { user } = ctx.state;
+        const {
+            step,
+            data
+        } = ctx.scene.state;
+
+        const { text } = ctx.message;
+        const text_num = Number(text);
+
+        if (step !== 2 && step !== 6) {
+            const type = SETTINGS_STEPS[step];
+
+            let isSuccess = false,
+                message = messages.notCorrectData(user.lang, type);
+
+            if (step < 4) {
+                if (step === 1) {
+                    const check = await checkFiat(user, text);
+
+                    isSuccess = check.isSuccess;
+                    message = check.message;
+
+                    if (isSuccess) {
+                        ctx.scene.state.data['fiat'] = check.currency;
+                        ctx.scene.state.data['payMethods'] = '[]';
+                    }
+                } else if (step === 3) {
+                    const check = await checkCoin(user, data['fiat'], text);
+
+                    isSuccess = check.isSuccess;
+                    message = check.message;
+
+                    if (isSuccess) {
+                        ctx.scene.state.data['coin'] = check.coin;
+                    }
+                } else {
+                    isSuccess = true;
+                    ctx.scene.state.data[type] = (step === 2) ? '[' + text + ']' : text;
+                }
+            } else if (step > 3 && typeof text_num === 'number') {
+                if (step === 7) {
+                    if (data['priceType'] === 'diff' && text_num > 0 && text_num <= 100) {
+                        isSuccess = true;
+                        ctx.scene.state.data[type] = text_num / 100;
+                    } else if (data['priceType'] === 'price') {
+                        isSuccess = true;
+                        ctx.scene.state.data[type] = text_num;
+                    } else {
+                        message = messages.notCorrectData(user.lang, data['priceType']);
+                    }
+                } else if ((step === 5 && text_num >= 0 && text_num < data['maxOrder']) ||
+                    (step === 4 && text_num > 0) ||
+                    step > 5) {
+                        isSuccess = true;
+                        ctx.scene.state.data[type] = text_num;
+                }
+            }
+
+            if (isSuccess) {
+                ctx.scene.state.step++;
+
+                if (ctx.scene.state.step === 2) {
+                    return await getPayMethods(ctx);
+                } else {
+                    message = messages.botSettingsType(user.lang, SETTINGS_STEPS[ctx.scene.state.step], ctx.scene.state.data);
+                }
+            }
+
+            sender.enqueue({
+                chat_id: ctx.from.id,
+                message
+            });
+        }
+    });
+
+    return create_bot;
+}
+
 function botSettings() {
     const settings = new Scene('settings');
 
@@ -501,9 +893,9 @@ function botSettings() {
                     isUpdate = true;
                     update[step] = check.coin;
                 }
-            } else if (text_num &&
-                ((step === 'maxOrder' && text_num > data['minOrder']) ||
-                (step === 'minOrder' && text_num < data['maxOrder']) ||
+            } else if (typeof text_num === 'number' &&
+                ((step === 'maxOrder' && text_num > data['minOrder'] && text_num > 0) ||
+                (step === 'minOrder' && text_num < data['maxOrder'] && text_num >= 0) ||
                 step === 'colCreateOrders')) {
                     isUpdate = true;
                     update[step] = text_num;
@@ -543,176 +935,19 @@ function botSettings() {
     return settings;
 }
 
-function addAPIKeys() {
-    const api_keys = new Scene('api_keys');
+function buySubscription() {
+    const subscription = new Scene('subscription');
 
-    api_keys.use(middlewares.start);
+    subscription.use(middlewares.start);
 
-    api_keys.enter(async (ctx) => {
-        const { user } = ctx.state;
-        const {
-            bot_id,
-            message_id
-        } = ctx.scene.state;
-
-        ctx.scene.state.data = {
-            tg_id: ctx.from.id,
-            bot_id: (bot_id) ? [bot_id] : [],
-            name: Date.parse(new Date()),
-            isUse: (bot_id) ? true : false,
-            api: null,
-            secret: null
-        };
-
-        const message = messages.addAPIKeys(user.lang, null, ctx.scene.state.data, message_id);
-
-        sender.enqueue({
-            chat_id: ctx.from.id,
-            message
-        });
-    });
-
-    api_keys.action(/choose-(name|api|secret)/, async (ctx) => {
-        const { user } = ctx.state;
-        const { message_id } = ctx.update.callback_query.message;
-
-        ctx.scene.state.step = ctx.match[1];
-
-        const message = messages.addAPIKeys(user.lang, ctx.scene.state.step, {}, message_id);
-
-        sender.enqueue({
-            chat_id: ctx.from.id,
-            message
-        });
-    });
-
-    api_keys.action('accept', async (ctx) => {
-        const { user } = ctx.state;
-        const { message_id } = ctx.update.callback_query.message;
-        const {
-            bot_id,
-            data
-        } = ctx.scene.state;
-
-        let isLeave = false,
-            message = null,
-            update = null,
-            binanceUserId = await BinanceService.getUserIdentifier(data.api, data.secret);
-
-        if (binanceUserId) {
-            const check = await userDBService.get({ binanceUserIds: binanceUserId });
-
-            if (check) {
-                if (bot_id) {
-                    const search_keys = {
-                        api_key: data.api,
-                        secret_key: data.secret
-                    };
-                    const order_keys = {
-                        name: data.name,
-                        first_key: data.api,
-                        second_key: data.secret,
-                        isCookie: false
-                    };
-
-                    update = {
-                        use_order_key: data.name,
-                        $addToSet: {
-                            search_keys,
-                            order_keys
-                        }
-                    };
-                }
-
-                await keyDBService.create(data);
-
-                if (update) {
-                    await botDBService.update({ id: bot_id }, update);
-                }
-
-                isLeave = true;
-                message = messages.APIKeysAdded(user.lang, message_id);
-            } else {
-                message = messages.userIdIsAlreadyUse(user.lang);
-            }
-        } else {
-            message = messages.APIKeysIsNotCorrect(user.lang);
-        }
-
-        if (isLeave) {
-            await ctx.replyWithHTML(message.text, message.extra);
-
-            if (user.registrationStatus === 'personal') {
-                if (bot_id) {
-                    await ctx.scene.enter('settings', {
-                        bot_id
-                    });
-                } else {
-                    await ctx.scene.enter('create_bot');
-                }
-            } else {
-                await ctx.scene.enter('trial_3days', {
-                    step: 0,
-                    data: {
-                        currency: null
-                    }
-                });
-            }
-        } else {
-            await ctx.answerCbQuery(message.text, message.extra.show_alert);
-        }
-    });
-
-    api_keys.action('back', async (ctx) => {
-        const { message_id } = ctx.update.callback_query.message;
-        const { bot_id } = ctx.scene.state;
-
-        if (bot_id) {
-            await ctx.scene.enter('settings', {
-                bot_id,
-                message_id
-            });
-        }
-    });
-
-    api_keys.on('text', async (ctx) => {
-        const { user } = ctx.state;
-        const { step } = ctx.scene.state;
-
-        const { text } = ctx.message;
-
-        if (step === 'name') {
-            ctx.scene.state.data[step] = text;
-        } else if (step === 'api') {
-            ctx.scene.state.data[step] = text;
-        } else if (step === 'secret') {
-            ctx.scene.state.data[step] = text;
-        }
-
-        const message = messages.addAPIKeys(user.lang, null, ctx.scene.state.data);
-
-        sender.enqueue({
-            chat_id: ctx.from.id,
-            message
-        });
-    });
-
-    return api_keys;
-}
-
-function createBot() {
-    const create_bot = new Scene('create_bot');
-
-    create_bot.use(middlewares.start);
-
-    create_bot.enter(async (ctx) => {
+    subscription.enter(async (ctx) => {
         const { user } = ctx.state;
         const { message_id } = ctx.scene.state;
 
-        ctx.scene.state.step = 0;
-        ctx.scene.state.data = {};
+        ctx.scene.state.config = helper.getConfig();
+        ctx.scene.state.plan = null;
 
-        const message = messages.botSettingsType(user.lang, SETTINGS_STEPS[ctx.scene.state.step], ctx.scene.state.data, message_id);
+        const message = messages.choosePlan(user.lang, ctx.scene.state.config['SUBSCRIPTIONS'], message_id);
 
         sender.enqueue({
             chat_id: ctx.from.id,
@@ -720,87 +955,31 @@ function createBot() {
         });
     });
 
-    create_bot.action(PAYMETHOD_REG, async (ctx) => {
-        await addPayMethod(ctx);
-    });
-
-    create_bot.action(SET_REG, async (ctx) => {
+    subscription.action(/choose-([0-9]+)/, async (ctx) => {
         const { user } = ctx.state;
         const { message_id } = ctx.update.callback_query.message;
+        const { config } = ctx.scene.state;
 
-        const key = ctx.match[1];
-        const value = ctx.match[2];
+        const index = Number(ctx.match[1]);
 
-        ctx.scene.state.step++;
+        ctx.scene.state.plan = config['SUBSCRIPTIONS'][index];
 
-        if (key === 'fiat') {
-            ctx.scene.state.data[key] = value;
-            ctx.scene.state.data['payMethods'] = '[]';
+        const message = messages.enterPromoCode(user.lang, message_id);
 
-            const fiat_message = messages.trial3days(user.lang, 1, ctx.scene.state.data);
-
-            await ctx.deleteMessage();
-            await ctx.replyWithHTML(fiat_message.text, fiat_message.extra);
-        } else if (key === 'payMethods') {
-            const { payMethods } = ctx.scene.state;
-
-            ctx.scene.state.data[key] = helper.setPayMethods(payMethods);
-        } else {
-            ctx.scene.state.data[key] = value;
-        }
-
-
-        if (ctx.scene.state.step === 2) {
-            await getPayMethods(ctx);
-        } else {
-            sender.enqueue({
-                chat_id: ctx.from.id,
-                message: messages.botSettingsType(user.lang, SETTINGS_STEPS[ctx.scene.state.step], ctx.scene.state.data, message_id)
-            });
-        }
+        sender.enqueue({
+            chat_id: ctx.from.id,
+            message
+        });
     });
 
-    create_bot.action(NEXT_REG, async (ctx) => {
-        await nextMessage(ctx);
-    });
-
-    create_bot.action('accept', async (ctx) => {
-        const { user } = ctx.state;
-        const { data } = ctx.scene.state;
-
-        const create = await BotService.createBot(user, 'personal', data);
-
-        let message = null;
-
-        if (create.isSuccess) {
-            console.log(create)
-        } else {
-            message = messages.botError(user.lang, create.bot, create.response);
-        }
-
-        await ctx.deleteMessage();
-
-        if (message) {
-            sender.enqueue({
-                chat_id: ctx.from.id,
-                message
-            });
-        }
-    });
-
-    create_bot.action('back', async (ctx) => {
+    subscription.action('skip', async (ctx) => {
         const { user } = ctx.state;
         const { message_id } = ctx.update.callback_query.message;
-        const { data } = ctx.scene.state;
+        const { plan } = ctx.scene.state;
 
-        if (ctx.scene.state.step > 0) {
-            ctx.scene.state.step--;
-        }
-
-        if (ctx.scene.state.step === 2) {
-            await getPayMethods(ctx);
-        } else {
-            const message = messages.botSettingsType(user.lang, SETTINGS_STEPS[ctx.scene.state.step], data, message_id);
+        if (plan) {
+            const invoice = await PaymentService.createInvoice(ctx.from.id, plan);
+            const message = messages.invoice(user.lang, invoice, message_id);
 
             sender.enqueue({
                 chat_id: ctx.from.id,
@@ -809,87 +988,55 @@ function createBot() {
         }
     });
 
-    create_bot.on('text', async (ctx) => {
+    subscription.action('reenter', async (ctx) => {
+        await ctx.scene.reenter();
+    });
+
+    subscription.on('text', async (ctx) => {
         const { user } = ctx.state;
-        const {
-            step,
-            data
-        } = ctx.scene.state;
+        const { plan } = ctx.scene.state;
 
         const { text } = ctx.message;
-        const text_num = Number(text);
 
-        if (step !== 2 && step !== 6) {
-            const type = SETTINGS_STEPS[step];
+        if (plan) {
+            const check = await promoDBService.get({ id: text });
 
-            let isSuccess = false,
-                message = messages.notCorrectData(user.lang, type);
+            let isLeave = false, message = null;
 
-            if (step < 4) {
-                if (step === 1) {
-                    const check = await checkFiat(user, text);
+            if (check) {
+                plan.amount = (check.type === 'discount') ?
+                    plan.amount - (plan.amount * check.percent / 100) : plan.amount;
 
-                    isSuccess = check.isSuccess;
-                    message = check.message;
+                const invoice = await PaymentService.createInvoice(ctx.from.id, plan);
 
-                    if (isSuccess) {
-                        ctx.scene.state.data['fiat'] = check.currency;
-                        ctx.scene.state.data['payMethods'] = '[]';
-                    }
-                } else if (step === 3) {
-                    const check = await checkCoin(user, data['fiat'], text);
+                await userDBService.update({ tg_id: ctx.from.id }, { promo_code: text });
+                await ctx.replyWithHTML(ctx.i18n.t('successfullyPromoCode_message'));
 
-                    isSuccess = check.isSuccess;
-                    message = check.message;
-
-                    if (isSuccess) {
-                        ctx.scene.state.data['coin'] = check.coin;
-                    }
-                } else {
-                    isSuccess = true;
-                    ctx.scene.state.data[type] = (step === 2) ? '[' + text + ']' : text;
-                }
-            } else if (step > 3 && text_num) {
-                if (step === 7) {
-                    if (data['priceType'] === 'diff' && text_num > 0 && text_num <= 100) {
-                        isSuccess = true;
-                        ctx.scene.state.data[type] = text_num / 100;
-                    } else if (data['priceType'] === 'price') {
-                        isSuccess = true;
-                        ctx.scene.state.data[type] = text_num;
-                    } else {
-                        message = messages.notCorrectData(user.lang, data['priceType']);
-                    }
-                } else if (step === 5 && text_num < data['maxOrder'] || step !== 5) {
-                    isSuccess = true;
-                    ctx.scene.state.data[type] = text_num;
-                }
-            }
-
-            if (isSuccess) {
-                ctx.scene.state.step++;
-
-                if (ctx.scene.state.step === 2) {
-                    return await getPayMethods(ctx);
-                } else {
-                    message = messages.botSettingsType(user.lang, SETTINGS_STEPS[ctx.scene.state.step], ctx.scene.state.data);
-                }
+                isLeave = true;
+                message = messages.invoice(user.lang, invoice);
+            } else {
+                message = messages.incorrectPromoCode(user.lang);
             }
 
             sender.enqueue({
                 chat_id: ctx.from.id,
                 message
             });
+
+            if (isLeave) {
+                await ctx.scene.leave();
+            }
         }
     });
 
-    return create_bot;
+    return subscription;
 }
 
 module.exports = {
     start3daysTrial,
     start3ordersTrial,
-    botSettings,
     addAPIKeys,
-    createBot
+    createBot,
+    botSettings,
+    buySubscription
 }

@@ -1,4 +1,4 @@
-start_message: '🎉 Welcome to the P2P Bot! Delighted to have you here! 🌟
+startTrial_message: '🎉 Welcome to the P2P Bot! Delighted to have you here! 🌟
 
 
 Unlock the full potential of your trading with our bot and experience the following advantages:
@@ -21,6 +21,20 @@ To continue enjoying full access to our bot’s features, consider purchasing a 
 <b>🚀 Buy Subscription</b>
 
 Click the button below to upgrade now and maintain uninterrupted access to all functionalities!'
+
+botMenu_message: '<b>🤖 Welcome to the ${name} Menu!
+
+Status of your bot: {status}</b>
+
+
+This is the main menu of your bot. Here you can:
+
+<b>🚀 Start Operation — Launch the bot to perform tasks.
+
+⚙️ Configure — Modify the bot’s settings to optimize its operation according to your needs.</b>
+
+
+Select an option to continue!'
 
 trial3days_message: '<b>🎉 Your 3-Day Free Trial Has Begun!</b>
 
@@ -98,6 +112,25 @@ subIsEnd1DayRemind_message: '🚨 Final Day of Your Trial Period
 Just a heads up—your trial period ends tomorrow! Don’t miss out on continuous access to all the features you’ve been enjoying.
 
 🚀 Upgrade Now! Consider purchasing a subscription today to maintain your access and benefits without interruption.'
+lastOrderRemind_message: '🚨 Last Order Alert!
+
+You have one order remaining in your trial period. Make the most of this final opportunity to see how our service can enhance your trading experience.
+
+
+🎉 Consider Subscribing! Don't let your access end here. Subscribe today to continue enjoying uninterrupted service and all the benefits our platform offers.
+
+
+Upgrade now and keep your trading on track!'
+reachedFreeOrderLimitRemind_message: '<b>🚀 You've Reached Your Free Order Limit!</b>
+
+🎉 Congratulations on successfully completing three free orders and earning with our bot!  Now that you know how it works, continue your journey by purchasing a subscription.
+
+
+<b>To keep the profits rolling and access unlimited orders, please subscribe now.</b>'
+
+changeTrial_message: '<b>🔄 Update to Your Trial Period</b>
+
+We have updated your trial period from 3 days to 3 orders. Now, you can fully utilize our services through three orders, regardless of the time it takes to complete them. This change allows you to experience our features in a real-world trading environment at your own pace.'
 
 incorrectCurrency_message: '⚠️ Incorrect Currency Entered. It looks like there might have been an error in the currency you entered.
 
@@ -242,6 +275,42 @@ APIKeysIsNotCorrect_message: '🚫 Invalid API Key'
 
 youNotSubscribeToChannel_message: 'You need to join the channel'
 
+stopBotToChange_message: '🚫 Stop the bot to change the settings'
+
+choosePlan_message: '<b>🌟 Choose Your Plan!</b>
+
+Ready to buy your subscription? Select the plan that fits your needs:'
+
+enterPromoCode_message: '<b>🌟 Do You Have a Promo Code?</b>
+
+Unlock exclusive discounts on your subscription with a promo code! If you have one, enter it below to apply your discount and enjoy savings on our services.
+
+
+<b>👇 Enter Promo Code Here</b>'
+
+successfullyPromoCode_message: '✅ Promo Code Successfully Applied!'
+incorrectPromoCode_message: '🚫 Incorrect Promo Code Entered'
+
+invoice_message: '<b>🔗 Proceed to Payment</b>
+
+Click the button below to go to the payment page for your subscription. Ensure your service continues without interruption by completing your payment securely.
+
+
+<b>👇 Pay Now</b>'
+
+subscriptionPaidSuccessfully_message: '<b>✅ Subscription Paid Successfully</b>
+
+Create your own bot by clicking the button
+
+👇'
+createYourBot_message: 'Create your own bot by clicking the button'
+startYourBot_message: 'Start your own bot by clicking the button'
+
+subscriptionPaidSuccessfullyLogs_message: '✅ <b>${user}</b> paid for the subscription on <b>${days} days</b>.
+
+Promo code: ${promo}'
+paidFailedLogs_message: 'Failed payment'
+
 adminMenu_message: 'Admin menu'
 enterProxies_message: 'Enter list of proxies in format: <b>IP:PORT:login:pass</b>'
 enterKeys_message: 'Enter list of API keys in format: <b>API:SECRET</b>'
@@ -275,11 +344,20 @@ diffNotCorrectData_message: 'Not correct: numbers must be from 1 to 100 %'
 priceNotCorrectData_message: 'Not correct: only numbers'
 colCreateOrdersNotCorrectData_message: 'Not correct: only numbers'
 
+youHaveStartedBot_message: 'You have started the bot'
+youHaveStoppedBot_message: 'You have stopped the bot'
+
+botMenu_button: '🤖 Bot'
+faq_button: '❔ FAQ'
+channels_button: '📰 Channel'
+support_button: '🆘 Support'
+
 startTrial_button: '🎉Start Your Free Trial!'
 buySub_button: '💸Buy subscription'
 information_button: '📖Information'
 
-changeTrialPeriod_button: '🔄Change Your Trial Period'
+changeTrialPeriod_button: '🔄 Change Your Trial Period'
+changeTo3orders_button: 'Change to 3 orders'
 
 start_button: 'Start'
 
@@ -319,11 +397,18 @@ chooseAllPayMethods_button: 'Choose All Pay Methods'
 diff_button: 'Diff'
 price_button: 'Price'
 
+createBot_button: 'Create Bot'
+startBot_button: '🚀 Start Bot'
+stopBot_button: 'Stop Bot'
+
+pay_button: 'Pay'
+
 all_button: 'All'
 accept_button: '✅ Accept'
 proceed_button: 'Proceed'
 next_button: 'Next'
 back_button: 'Back'
+skip_button: 'Skip'
 cancel_button: 'Cancel'
 
 new_status: '🟢 NEW ORDER'

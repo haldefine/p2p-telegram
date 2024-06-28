@@ -11,22 +11,30 @@ class BinanceService {
      * @return {Promise<string[]>} An array of fiat currency codes
      */
     async getFiatsList() {
-        let data = JSON.stringify({});
+        try {
+            let data = JSON.stringify({});
 
-        let config = {
-            method: 'post',
-            maxBodyLength: Infinity,
-            url: 'https://p2p.binance.com/bapi/c2c/v1/friendly/c2c/trade-rule/fiat-list',
-            headers: {
-                'content-type': 'application/json'
-            },
-            data : data
-        };
+            let config = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: 'https://p2p.binance.com/bapi/c2c/v1/friendly/c2c/trade-rule/fiat-list',
+                headers: {
+                    'content-type': 'application/json'
+                },
+                data : data
+            };
 
-        const res = await axios.request(config);
-        const fiats = res.data.data.map(fiat => fiat.currencyCode);
+            const res = await axios.request(config);
+            const fiats = res.data.data.map(fiat => fiat.currencyCode);
 
-        return fiats.filter(fiat => fiat !== 'UAH');
+            return fiats.filter(fiat => fiat !== 'UAH');
+        } catch (error) {
+            const response = error.response ? error.response.data : error;
+
+            console.log('[getFiatsList]', response);
+
+            return [];
+        }
     }
 
     /**
@@ -36,26 +44,34 @@ class BinanceService {
      * @return {Promise<string[]>} An array of assets representing the coins related to the specified fiat currency.
      */
     async getCoinsList(fiat) {
-        let data = JSON.stringify({
-            "fiat": fiat
-        });
+        try {
+            let data = JSON.stringify({
+                "fiat": fiat
+            });
 
-        let config = {
-            method: 'post',
-            maxBodyLength: Infinity,
-            url: 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/portal/config',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            data : data
-        };
+            let config = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/portal/config',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data : data
+            };
 
-        const res = await axios.request(config)
-        const p2pdata = res.data.data.areas.find(area => area.area === 'P2P');
-        const buySide = p2pdata.tradeSides.find(side => side.side === 'BUY');
-        // const payMethods = buySide.tradeMethods.map(method => method.identifier);
+            const res = await axios.request(config)
+            const p2pdata = res.data.data.areas.find(area => area.area === 'P2P');
+            const buySide = p2pdata.tradeSides.find(side => side.side === 'BUY');
+            // const payMethods = buySide.tradeMethods.map(method => method.identifier);
 
-        return buySide.assets.map(asset => asset.asset);
+            return buySide.assets.map(asset => asset.asset);
+        } catch (error) {
+            const response = error.response ? error.response.data : error;
+
+            console.log('getCoinsList', response);
+
+            return [];
+        }
     }
 
     /**
@@ -65,23 +81,31 @@ class BinanceService {
      * @return {Promise<string[]>} An array of payment method identifiers.
      */
     async getPayMethods(fiat) {
-        let data = JSON.stringify({
-            "fiat": fiat
-        });
+        try {
+            let data = JSON.stringify({
+                "fiat": fiat
+            });
 
-        let config = {
-            method: 'post',
-            maxBodyLength: Infinity,
-            url: 'https://p2p.binance.com/bapi/c2c/v2/public/c2c/adv/filter-conditions',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            data : data
-        };
+            let config = {
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: 'https://p2p.binance.com/bapi/c2c/v2/public/c2c/adv/filter-conditions',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data : data
+            };
 
-        const res = await axios.request(config);
+            const res = await axios.request(config);
 
-        return res.data.data.tradeMethods.map(m => m.identifier);
+            return res.data.data.tradeMethods.map(m => m.identifier);
+        } catch (error) {
+            const response = error.response ? error.response.data : error;
+
+            console.log('getPayMethods', response);
+
+            return [];
+        }
     }
 
     /**
@@ -91,22 +115,26 @@ class BinanceService {
      * @return {Promise<number>} The price of the specified fiat currency.
      */
     async getPrice(fiat) {
-        const res = await axios.post('https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search', {
-            "fiat": fiat,
-            "page": 1,
-            "rows": 1,
-            "tradeType": "BUY",
-            "asset": "USDT"
-        }, {
-            maxBodyLength: Infinity,
-            headers: {
-                'Content-Type': 'application/json'
-            },
-        });
+        try {
+            const res = await axios.post('https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search', {
+                "fiat": fiat,
+                "page": 1,
+                "rows": 1,
+                "tradeType": "BUY",
+                "asset": "USDT"
+            }, {
+                maxBodyLength: Infinity,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            });
 
-        if (res.data && res.data.data[0]) {
             return Number(res.data.data[0].adv.price);
-        } else {
+        } catch (error) {
+            const response = error.response ? error.response.data : error;
+
+            console.log('[getPrice]', response);
+
             return 0;
         }
     }
@@ -133,7 +161,9 @@ class BinanceService {
 
             return res.data.data.kycFullName;
         } catch (error) {
-            console.log('getUserIdentifier', error);
+            const response = error.response ? error.response.data : error;
+
+            console.log('getUserIdentifier', response);
 
             return null;
         }
@@ -192,7 +222,7 @@ class BinanceService {
     }
 
     signUrl(url, secret_key) {
-        const timestamp  = Date.now();
+        const timestamp = Date.now();
 
         let paramsObject = {};
 

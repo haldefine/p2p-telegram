@@ -36,9 +36,10 @@ const admin = require('./scenes/admin');
 const stage = new Stage([
     profile.start3daysTrial(),
     profile.start3ordersTrial(),
-    profile.botSettings(),
     profile.addAPIKeys(),
     profile.createBot(),
+    profile.botSettings(),
+    profile.buySubscription(),
     admin.adminMenu()
 ]);
 
@@ -97,7 +98,7 @@ bot.hears(/clear (users|bots|keys|proxies)/, async (ctx) => {
             for (let i = 0; i < bots.length; i++) {
                 const el = bots[i];
 
-                BotService.stopBot(el.id);
+                await BotService.stopBot(el.id);
 
                 await botDBService.delete({ id: el.id });
             }

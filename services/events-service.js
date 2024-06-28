@@ -1,4 +1,5 @@
 const messages = require('../scripts/messages');
+const timer = require('../scripts/timer');
 
 const BinanceService = require('./binance-service');
 const BotService = require('./bot-service');
@@ -171,16 +172,21 @@ class EventsService {
                 await orderDBService.create(fullData);
             }
 
-            if (targetUser.registrationStatus === '3order') {
+            if (targetUser.registrationStatus === 'free') {
+                await BotService.stopBot(bot.id);
+            }
+
+            if (targetUser.registrationStatus === '3orders') {
                 const counter = await orderDBService.getCount({ tg_id: targetUser.tg_id });
 
                 if (counter >= 3) {
+                    await userDBService.update({ tg_id: targetUser.tg_id }, { registrationStatus: 'free' });
                     await BotService.stopBot(bot.id);
-                }
-            }
 
-            if (targetUser.registrationStatus === 'free') {
-                await BotService.stopBot(bot.id);
+                    timer.remind(targetUser.lang, 'reachedFreeOrderLimit', 3600000);
+                } else if (counter === 2) {
+                    timer.remind(targetUser.lang, 'lastOrder', 600000)
+                }
             }
         }
     }

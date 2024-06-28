@@ -7,68 +7,59 @@ const {
 } = require('./db');
 
 class BotService {
-    async createBot(creator, type, data = null) {
+    async createBot(creator, data) {
         const admins = await userDBService.getAll({ role: 'admin' });
         const assignedToUser = admins.map(admin => admin.tg_id);
 
-        let newBot = (data) ?
-            {
-                type,
-                ...data,
-                assignedToUser,
-                use_order_key: '_',
-                search_keys: [],
-                order_keys: []
-            } : {
-                type,
-                name: type,
-                assignedToUser,
-                fiat: creator.currency,
-                use_order_key: '',
-                search_keys: [],
-                order_keys: []
-            };
+        let newBot = {
+            ...data,
+            assignedToUser
+        };
 
         if (!assignedToUser.includes(creator.tg_id)) {
             assignedToUser.push(creator.tg_id);
         }
 
-        if (type === '3days' || type === '3orders') {
-            const req = (type === '3days') ?
-                {
-                    $expr: { $lt: [{ $size: '$bot_id' }, 2] }
-                } :
-                {
-                    tg_id: creator.tg_id,
-                    $expr: { $lt: [{ $size: '$bot_id' }, 2] }
-                };
-            const keys = await keyDBService.getAll(req, {}, {}, 1);
+        const req = (data.type === '3days') ?
+            {
+                $expr: { $lt: [{ $size: '$bot_id' }, 2] }
+            } :
+            {
+                tg_id: creator.tg_id,
+                $expr: { $lt: [{ $size: '$bot_id' }, 2] }
+            };
+        const keys = await keyDBService.getAll(req, {}, {}, 1);
 
-            if (type === '3orders') {
-                newBot.maxOrder = 100;
-            }
+        if (data.type === '3orders') {
+            newBot.maxOrder = 100;
+        }
 
-            if (keys[0]) {
-                newBot.use_order_key = data.name;
-                newBot = keys.reduce((acc, el) => {
-                    acc.order_keys[acc.order_keys.length] = {
-                        name,
-                        first_key: el.api,
-                        second_key: el.secret,
-                        isCookie: false
-                    };
-                    acc.search_keys[acc.search_keys.length] = {
-                        api_key: el.api,
-                        secret_key: el.secret
-                    };
-                    return acc;
-                }, newBot);
-            } else {
-                return {
-                    isSuccess: false,
-                    response: 'No keys available'
+        if (keys[0]) {
+            const temp = keys.reduce((acc, el) => {
+                acc.order_keys[acc.order_keys.length] = {
+                    name: el.name,
+                    first_key: el.api,
+                    second_key: el.secret,
+                    isCookie: false
                 };
-            }
+                acc.search_keys[acc.search_keys.length] = {
+                    api_key: el.api,
+                    secret_key: el.secret
+                };
+                return acc;
+            }, {
+                order_keys: [],
+                search_keys: []
+            });
+
+            newBot.use_order_key = temp.order_keys[0].name;
+            newBot.order_keys = temp.order_keys;
+            newBot.search_keys = temp.search_keys;
+        } else {
+            return {
+                isSuccess: false,
+                response: 'No keys available'
+            };
         }
 
         const bot = await botDBService.create(newBot);
@@ -100,7 +91,7 @@ class BotService {
     }
 
     async startBot(botId, proxy = { req: { isUse: false }, limit: 1 }) {
-        const bot = await botDBService.get({ id: botId });
+        let bot = await botDBService.get({ id: botId });
 
         let response = 'Bot is not found in DB',
             isSuccess = false,
@@ -123,7 +114,7 @@ class BotService {
                 };
             }
 
-            response = await WebService.startBot(bot, proxies);
+            response = await WebService.startBot(bot._doc, proxies);
 
             if (response === 'success' || response === 'This bot already started') {
                 isSuccess = true;
@@ -154,18 +145,19 @@ class BotService {
             }
 
             if (update) {
-                await botDBService.update({ id: bot.id }, update);
+                bot = await botDBService.update({ id: bot.id }, update, 'after');
             }
         }
 
         return {
             isSuccess,
-            response
+            response,
+            bot
         };
     }
 
     async stopBot(botId) {
-        const bot = await botDBService.get({ id: botId });
+        let bot = await botDBService.get({ id: botId });
 
         let response = 'Bot is not found in DB',
             isSuccess = false;
@@ -176,7 +168,7 @@ class BotService {
             if (bot.working) {
                 isSuccess = true;
 
-                await botDBService.update({ id: bot.id }, { working: false });
+                bot = await botDBService.update({ id: bot.id }, { working: false }, 'after');
 
                 await proxyDBService.updateAll({
                     isUse: true,
@@ -187,7 +179,8 @@ class BotService {
 
         return {
             isSuccess,
-            response
+            response,
+            bot
         };
     }
 

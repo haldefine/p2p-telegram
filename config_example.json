@@ -1,4 +1,21 @@
 {
     "INFORMATION_URL": "https://t.me/",
-    "CHANNELS": [-1001943472414]
+    "CHANNELS": ["-1001943472414"],
+    "LOGS": "-1001943472414",
+    "SUBSCRIPTIONS": [
+        {
+            "type": "Subscription",
+            "title": "1 month",
+            "period": 30,
+            "amount": 1,
+            "currency": "usd"
+        },
+        {
+            "type": "Subscription",
+            "title": "3 months",
+            "period": 90,
+            "amount": 3,
+            "currency": "usd"
+        }
+    ]
 }

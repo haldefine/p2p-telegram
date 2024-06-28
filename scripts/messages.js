@@ -38,18 +38,43 @@ const paginations = (lang, data, page, length, key, size = 5) => {
     return inline_keyboard;
 };
 
-const start = (lang) => {
+const menu = (lang) => {
+    const message = {
+        type: 'text',
+        text: '...',
+        extra: {
+            reply_markup: {
+                resize_keyboard: true,
+                keyboard: [
+                    [
+                        { text: i18n.t(lang, 'botMenu_button') },
+                        { text: i18n.t(lang, 'faq_button') }
+                    ],
+                    [
+                        { text: i18n.t(lang, 'channels_button') },
+                        { text: i18n.t(lang, 'information_button') }
+                    ],
+                    [{ text: i18n.t(lang, 'support_button') }]
+                ]
+            }
+        }
+    };
+
+    return message;
+};
+
+const startTrial = (lang) => {
     const CONFIG = JSON.parse(fs.readFileSync('./config.json'));
 
     const message = {
         type: 'text',
-        text: i18n.t(lang, 'start_message'),
+        text: i18n.t(lang, 'startTrial_message'),
         extra: {
             reply_markup: {
                 inline_keyboard: [
                     [
                         { text: i18n.t(lang, 'startTrial_button'), callback_data: 'trial' },
-                        { text: i18n.t(lang, 'buySub_button'), callback_data: 'buy-sub' },
+                        { text: i18n.t(lang, 'buySub_button'), callback_data: 'buy-subscription' },
                     ],
                     [{ text: i18n.t(lang, 'information_button'), url: CONFIG['INFORMATION_URL'] }]
                 ]
@@ -60,7 +85,7 @@ const start = (lang) => {
     return message;
 };
 
-const menu = (lang, user, message_id = null) => {
+const botMenu = (lang, user, bot, message_id = null) => {
     const CONFIG = JSON.parse(fs.readFileSync('./config.json'));
 
     const message = {
@@ -75,13 +100,28 @@ const menu = (lang, user, message_id = null) => {
         message.text = i18n.t(lang, 'menu3days_message', {
             subEndDate: user.sub_end_date.toLocaleDateString('ru-RU'),
         });
-    }
 
-    inline_keyboard = [
-        [{ text: i18n.t(lang, 'buySub_button'), callback_data: 'buy-sub' }],
-        [{ text: i18n.t(lang, 'changeTrialPeriod_button'), callback_data: 'change-trial' }],
-        [{ text: i18n.t(lang, 'information_button'), url: CONFIG['INFORMATION_URL'] }]
-    ];
+        inline_keyboard = [
+            [{ text: i18n.t(lang, 'buySub_button'), callback_data: 'buy-sub' }],
+            [{ text: i18n.t(lang, 'changeTrialPeriod_button'), callback_data: 'change-trial' }],
+            [{ text: i18n.t(lang, 'information_button'), url: CONFIG['INFORMATION_URL'] }]
+        ];
+    } else if (user.registrationStatus === '3orders' || user.registrationStatus === 'subscription') {
+        const startBot_text = (bot.working) ?
+            i18n.t(lang, 'stopBot_button') : i18n.t(lang, 'startBot_button');
+        const startBot_cd = (bot.working) ?
+            `stopBot-${bot.id}` : `startBot-${bot.id}`;
+        message.text = i18n.t(lang, 'botMenu_message', {
+            name: bot.name,
+            status: bot.working ? 'working' : 'not working'
+        });
+
+        inline_keyboard = [
+            [{ text: startBot_text, callback_data: startBot_cd }],
+            [{ text: i18n.t(lang, 'settings_button'), callback_data: `settings-${bot.id}` }],
+            [{ text: i18n.t(lang, 'statisctics_button'), callback_data: `statistics-${bot.id}` }]
+        ];
+    }
 
     message.extra = {
         reply_markup: {
@@ -179,9 +219,10 @@ const trial3orders = (lang, step, message_id = null) => {
     return message;
 };
 
-const subscribeChannels = (lang, channels) => {
+const subscribeChannels = (lang, channels, callback_data = 'check-subscribe', message_id = null) => {
     const message = {
-        type: 'text',
+        type: (message_id) ? 'edit_text' : 'text',
+        message_id,
         text: i18n.t(lang, 'subscribeChannels_message'),
         extra: {}
     };
@@ -192,7 +233,7 @@ const subscribeChannels = (lang, channels) => {
 
     inline_keyboard[inline_keyboard.length] = [{
         text: i18n.t(lang, 'checkSubscribe_button'),
-        callback_data: 'check-subscribe'
+        callback_data
     }];
 
     message.extra = {
@@ -231,6 +272,23 @@ const subIsEnd1DayRemind = (lang) => {
                 inline_keyboard: [
                     [{ text: i18n.t(lang, 'changeTrialPeriod_button'), callback_data: 'change-trial' }],
                     [{ text: i18n.t(lang, 'buySub_button'), callback_data: 'buy-sub' }]
+                ]
+            }
+        }
+    };
+
+    return message;
+};
+
+const changeTrial = (lang, message_id = null) => {
+    const message = {
+        type: (message_id) ? 'edit_text' : 'text',
+        message_id,
+        text: i18n.t(lang, 'changeTrial_message'),
+        extra: {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: i18n.t(lang, 'changeTo3orders_button'), callback_data: 'change-3orders' }]
                 ]
             }
         }
@@ -595,7 +653,9 @@ const addAPIKeys = (lang, step, data, message_id = null) => {
         ];
     }
 
-    inline_keyboard[inline_keyboard.length] = [{ text: i18n.t(lang, 'back_button'), callback_data: 'back' }];
+    inline_keyboard[inline_keyboard.length] = [
+        { text: i18n.t(lang, 'back_button'), callback_data: 'back' }
+    ];
 
     message.extra = {
         reply_markup: {
@@ -616,25 +676,138 @@ const APIKeysAdded = (lang) => {
     return message;
 };
 
-const userIdIsAlreadyUse = (lang) => {
+const choosePlan = (lang, data, message_id = null) => {
     const message = {
-        type: 'cb',
-        text: i18n.t(lang, 'userIdIsAlredyUse_message'),
-        extra: {
-            show_alert: true
+        type: (message_id) ? 'edit_text' : 'text',
+        message_id,
+        text: i18n.t(lang, 'choosePlan_message'),
+        extra: {}
+    };
+    const inline_keyboard = data.reduce((acc, el, index) => {
+        acc[acc.length] = [{
+            text: el.title + ' - ' + el.amount + '$',
+            callback_data: `choose-${index}`
+        }];
+
+        return acc;
+    }, []);
+
+    inline_keyboard[inline_keyboard.length] = [{
+        text: i18n.t(lang, 'back_button'),
+        callback_data: 'cancel'
+    }];
+
+    message.extra = {
+        reply_markup: {
+            inline_keyboard
         }
     };
 
     return message;
 };
 
-const APIKeysIsNotCorrect = (lang) => {
+const enterPromoCode = (lang, message_id = null) => {
     const message = {
-        type: 'cb',
-        text: i18n.t(lang, 'APIKeysIsNotCorrect_message'),
+        type: (message_id) ? 'edit_text' : 'text',
+        message_id,
+        text: i18n.t(lang, 'enterPromoCode_message'),
         extra: {
-            show_alert: true
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: i18n.t(lang, 'skip_button'), callback_data: 'skip' }],
+                    [{ text: i18n.t(lang, 'back_button'), callback_data: 'reenter' }]
+                ]
+            }
         }
+    };
+
+    return message;
+};
+
+const incorrectPromoCode = (lang) => {
+    const message = {
+        type: 'text',
+        text: i18n.t(lang, 'incorrectPromoCode_message'),
+        extra: {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: i18n.t(lang, 'skip_button'), callback_data: 'skip' }]
+                ]
+            }
+        }
+    };
+
+    return message;
+};
+
+const invoice = (lang, invoice, message_id = null) => {
+    const message = {
+        type: (message_id) ? 'edit_text' : 'text',
+        message_id,
+        text: i18n.t(lang, 'invoice_message'),
+        extra: {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: i18n.t(lang, 'pay_button'), url: invoice.invoice_url }],
+                    [{ text: i18n.t(lang, 'back_button'), callback_data: 'buy-subscription' }]
+                ]
+            }
+        }
+    };
+
+    return message;
+};
+
+const subscriptionPaidSuccessfully = (lang, key) => {
+    const message = {
+        type: 'text',
+        text: i18n.t(lang, 'subscriptionPaidSuccessfully_message', {
+            key: `${key}YourBot_message`
+        }),
+        extra: {}
+    };
+
+    if (key === 'start') {
+        inline_keyboard = [
+            [{ text: i18n.t(lang, 'startBot_button'), callback_data: 'settings' }]
+        ];
+    } else {
+        inline_keyboard = [
+            [{ text: i18n.t(lang, 'createBot_button'), callback_data: 'add-create_bot' }]
+        ];
+    }
+
+    message.extra = {
+        reply_markup: {
+            inline_keyboard
+        }
+    };
+
+    return message;
+};
+
+const subscriptionPaidSuccessfullyLogs = (lang, user, body, days) => {
+    const message = {
+        type: 'text',
+        text: i18n.t(lang, 'subscriptionPaidSuccessfullyLogs_message', {
+            user: i18n.t(lang, 'user_url', {
+                id: user.tg_id,
+                username: user.tg_username
+            }),
+            days,
+            promoCode: (user.isPromoCodeActivated) ? user.promo_code : '❌'
+        }),
+        extra: {}
+    };
+
+    return message;
+};
+
+const paidFailedLogs = (lang, data) => {
+    const message = {
+        type: 'text',
+        text: i18n.t(lang, 'paidFailedLogs_message'),
+        extra: {}
     };
 
     return message;
@@ -735,9 +908,22 @@ const notCorrectData = (lang, key = 'default') => {
     return message;
 };
 
+const answerCbQuery = (lang, key, show_alert) => {
+    const message = {
+        type: 'cb',
+        text: i18n.t(lang, key),
+        extra: {
+            show_alert
+        }
+    };
+
+    return message;
+};
+
 module.exports = {
-    start,
     menu,
+    startTrial,
+    botMenu,
     startTrial3days,
     trial3days,
     startTrial3orders,
@@ -745,6 +931,7 @@ module.exports = {
     subscribeChannels,
     remind,
     subIsEnd1DayRemind,
+    changeTrial,
     incorrectCurrency,
     incorrectCoin,
     marketIsTooSmall,
@@ -759,12 +946,18 @@ module.exports = {
     menuAPIKeys,
     addAPIKeys,
     APIKeysAdded,
-    userIdIsAlreadyUse,
-    APIKeysIsNotCorrect,
+    choosePlan,
+    enterPromoCode,
+    incorrectPromoCode,
+    invoice,
+    subscriptionPaidSuccessfully,
+    subscriptionPaidSuccessfullyLogs,
+    paidFailedLogs,
     userStatus,
     adminMenu,
     addProxies,
     proxiesIsAdded,
     botError,
-    notCorrectData
+    notCorrectData,
+    answerCbQuery
 }

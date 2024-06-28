@@ -81,9 +81,8 @@ const checkSub = async () => {
 
             await userDBService.update({ tg_id: user.tg_id }, {
                 registrationStatus: 'free',
-                assignedBots: []
             });
-        } else if (diff <= 24) {
+        } else if (diff <= 24 && user.registrationStatus === '3days') {
             sender.enqueue({
                 chat_id: user.tg_id,
                 message: messages.subIsEnd1DayRemind(user.lang)

@@ -2,6 +2,8 @@ const fs = require('fs');
 
 const { sender } = require('../services/sender');
 
+const getConfig = () => JSON.parse(fs.readFileSync('./config.json'));
+
 const getChannels = async () => {
     const CONFIG = JSON.parse(fs.readFileSync('./config.json'));
 
@@ -63,6 +65,7 @@ const setPayMethods = (data) => data.reduce((acc, el, index) => {
 }, '');
 
 module.exports = {
+    getConfig,
     getChannels,
     checkSubscribe,
     checkFiat,
