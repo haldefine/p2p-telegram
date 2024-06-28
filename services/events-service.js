@@ -185,7 +185,7 @@ class EventsService {
 
                     timer.remind(targetUser.lang, 'reachedFreeOrderLimit', 3600000);
                 } else if (counter === 2) {
-                    timer.remind(targetUser.lang, 'lastOrder', 600000)
+                    timer.remind(targetUser.lang, 'lastOrder', 600000);
                 }
             }
         }
