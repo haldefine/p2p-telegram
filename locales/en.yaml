@@ -22,9 +22,12 @@ To continue enjoying full access to our bot’s features, consider purchasing a 
 
 Click the button below to upgrade now and maintain uninterrupted access to all functionalities!'
 
+menu_message: 'Hello!'
+
 botMenu_message: '<b>🤖 Welcome to the ${name} Menu!
 
-Status of your bot: {status}</b>
+
+Status of your bot: ${status}</b>
 
 
 This is the main menu of your bot. Here you can:
@@ -35,6 +38,19 @@ This is the main menu of your bot. Here you can:
 
 
 Select an option to continue!'
+botMenu3orders_message: '<b>🚀 You’re Currently on a Trial Period</b>
+
+
+📝 Remaining Orders: You have ${orders} orders left during your trial.
+
+
+You will receive a new order once it is your turn.
+
+
+🌟 Skip the Wait! Purchase a subscription now to bypass the queue and receive orders instantly, without any delays.
+
+
+Click below to upgrade and enjoy uninterrupted access to all orders!'
 
 trial3days_message: '<b>🎉 Your 3-Day Free Trial Has Begun!</b>
 
@@ -117,11 +133,11 @@ lastOrderRemind_message: '🚨 Last Order Alert!
 You have one order remaining in your trial period. Make the most of this final opportunity to see how our service can enhance your trading experience.
 
 
-🎉 Consider Subscribing! Don't let your access end here. Subscribe today to continue enjoying uninterrupted service and all the benefits our platform offers.
+🎉 Consider Subscribing! Don’t let your access end here. Subscribe today to continue enjoying uninterrupted service and all the benefits our platform offers.
 
 
 Upgrade now and keep your trading on track!'
-reachedFreeOrderLimitRemind_message: '<b>🚀 You've Reached Your Free Order Limit!</b>
+reachedFreeOrderLimitRemind_message: '<b>🚀 You’ve Reached Your Free Order Limit!</b>
 
 🎉 Congratulations on successfully completing three free orders and earning with our bot!  Now that you know how it works, continue your journey by purchasing a subscription.
 
@@ -237,6 +253,8 @@ Target ${priceType}: ${targetPrice}
 
 Number of orders to create: ${colCreateOrders}'
 
+onlyWithSubscription_message: '🔒 Feature Available with Subscription Only'
+
 menuAPIKeys_message: '<b>🔐 Binance API Key Menu</b>
 
 In this section, you can manage your API keys to ensure connectivity between the bot and your Binance account.
@@ -272,6 +290,14 @@ APIKeysAdded_message: '🔑 API Key Created Successfully!'
 
 userIdIsAlreadyUse_message: 'UserId is alredy use'
 APIKeysIsNotCorrect_message: '🚫 Invalid API Key'
+
+selectAPIKey_message: '🤖 Bot: ${botName}
+
+🔑 Selected API Key: ${APIName}
+
+
+You have the flexibility to select any API key you prefer. Browse and choose the key that best fits your current needs.'
+selectedAPIKey_message: 'Selected API Key ${name}'
 
 youNotSubscribeToChannel_message: 'You need to join the channel'
 
@@ -352,9 +378,11 @@ faq_button: '❔ FAQ'
 channels_button: '📰 Channel'
 support_button: '🆘 Support'
 
-startTrial_button: '🎉Start Your Free Trial!'
-buySub_button: '💸Buy subscription'
-information_button: '📖Information'
+startTrial_button: '🎉 Start Your Free Trial!'
+settings_button: '⚙️ Settings'
+buySub_button: '💸 Buy subscription'
+information_button: '📖 Information'
+statistics_button: '🧾 Statistics'
 
 changeTrialPeriod_button: '🔄 Change Your Trial Period'
 changeTo3orders_button: 'Change to 3 orders'
@@ -375,17 +403,17 @@ enterAPISecret_button: 'Secret key ${isAdded}'
 expand_button: 'Expand'
 collapse_button: 'Collapse'
 
-botName_button: 'Bot name ${data}'
-fiat_button: 'Fiat ${data}'
-payMethods_button: '${isLock} Pay Methods ${data}'
-coin_button: '${isLock} Coin ${data}'
-maxOrder_button: '${isLock} Max amount ${data}'
-minOrder_button: '${isLock} Min amount ${data}'
-priceType_button: '${isLock} Target: ${data}'
-targetPrice_button: '${isLock} Target price/percent ${data}'
-colCreateOrders_button: '${isLock} Max num orders ${data}'
-takeMaxOrder_button: '${isLock} Take Full bank orders ${data}'
-APIKeys_button: '${isLock} API Key'
+botName_button: 'Bot name [${data}]'
+fiat_button: 'Fiat [${data}]'
+payMethods_button: '${isLock} Pay Methods [${data}]'
+coin_button: '${isLock} Coin [${data}]'
+maxOrder_button: '${isLock} Max amount [${data}]'
+minOrder_button: '${isLock} Min amount [${data}]'
+priceType_button: '${isLock} Target: [${data}]'
+targetPrice_button: '${isLock} Target price/percent [${data}]'
+colCreateOrders_button: '${isLock} Max num orders [${data}]'
+takeMaxOrder_button: '${isLock} Take Full bank orders [${data}]'
+APIKeys_button: 'API Key'
 
 addAdmin_button: 'Add admin'
 addProxies_button: 'Add proxies'

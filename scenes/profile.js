@@ -28,10 +28,16 @@ const SETTINGS_STEPS = [
     'colCreateOrders',
     'createBot'
 ];
+const FREE_SETTINGS = [
+    'name',
+    'fiat',
+    'APIKeys'
+];
 
-const SET_REG = /set-(fiat|payMethods|coin|priceType)-([A-Za-z0-9]+)/g;
+const CHOOSE_REG = /choose-(name|fiat|coin|maxOrder|minOrder|targetPrice|colCreateOrders|api|secret)/g;
+const SET_REG = /set-(fiat|payMethods|coin|priceType|use_order_key)-([A-Za-z0-9]+)/g;
 const PAYMETHOD_REG = /payMethod-([0-9a-z]+)-([0-9a-z]+)/g;
-const NEXT_REG = /next-(payMethods)-([0-9]+)/g;
+const NEXT_REG = /next-(payMethods|APIKeys)-([0-9]+)/g;
 
 const trialLeave = async (ctx) => {
     const { user } = ctx.state;
@@ -163,7 +169,11 @@ const addPayMethod = async (ctx) => {
 const nextMessage = async (ctx) => {
     const { user } = ctx.state;
     const { message_id } = ctx.update.callback_query.message;
-    const { payMethods } = ctx.scene.state;
+    const {
+        data,
+        payMethods,
+        APIKeys
+    } = ctx.scene.state;
 
     const key = ctx.match[1];
     const page = Number(ctx.match[2]);
@@ -172,6 +182,8 @@ const nextMessage = async (ctx) => {
 
     if (key === 'payMethods') {
         message = messages.payMethods(user.lang, payMethods, page, payMethods.length, message_id);
+    } else if (key === 'APIKeys') {
+        message = messages.selectAPIKey(user.lang, data, APIKeys, page, APIKeys.length, message_id);
     }
 
     if (message) {
@@ -351,7 +363,7 @@ function addAPIKeys() {
         });
     });
 
-    api_keys.action(/choose-(name|api|secret)/, async (ctx) => {
+    api_keys.action(CHOOSE_REG, async (ctx) => {
         const { user } = ctx.state;
         const { message_id } = ctx.update.callback_query.message;
 
@@ -381,7 +393,7 @@ function addAPIKeys() {
         if (binanceUserId) {
             const check = await userDBService.get({ binanceUserIds: binanceUserId });
 
-            if (check) {
+            if (!check) {
                 if (bot_id) {
                     const search_keys = {
                         api_key: data.api,
@@ -683,12 +695,29 @@ function createBot() {
                     } else {
                         message = messages.notCorrectData(user.lang, data['priceType']);
                     }
-                } else if ((step === 5 && text_num >= 0 && text_num < data['maxOrder']) ||
-                    (step === 4 && text_num > 0) ||
-                    step > 5) {
+                } else {
+                    if (step === 5) {
+                        if (text_num >= 0 && text_num < data['maxOrder']) {
+                            isSuccess = true;
+                        } else {
+                            message = messages.notCorrectData(user.lang, 'minOrder');
+                        }
+                    } else if (step === 4) {
+                        if (text_num > 0) {
+                            isSuccess = true;
+                        } else {
+                            message = messages.notCorrectData(user.lang, 'maxOrder');
+                        }
+                    } else if (step > 5) {
                         isSuccess = true;
+                    }
+
+                    if (isSuccess) {
                         ctx.scene.state.data[type] = text_num;
+                    }
                 }
+            } else {
+                message = messages.notCorrectData(user.lang, 'default');
             }
 
             if (isSuccess) {
@@ -735,19 +764,23 @@ function botSettings() {
         });
     });
 
-    settings.action(/choose-([name|fiat|coin|maxOrder|minOrder|targetPrice|colCreateOrders])/, async (ctx) => {
+    settings.action(CHOOSE_REG, async (ctx) => {
         const { user } = ctx.state;
         const { message_id } = ctx.update.callback_query.message;
         const { data } = ctx.scene.state;
 
         ctx.scene.state.step = ctx.match[1];
 
-        const message = messages.botSettingsType(user.lang, ctx.scene.state.step, data, message_id);
+        if (user.registrationStatus === 'subscription' || FREE_SETTINGS.includes(ctx.scene.state.step)) {
+            const message = messages.botSettingsType(user.lang, ctx.scene.state.step, data, message_id);
 
-        sender.enqueue({
-            chat_id: ctx.from.id,
-            message
-        });
+            sender.enqueue({
+                chat_id: ctx.from.id,
+                message
+            });
+        } else {
+            await ctx.answerCbQuery(ctx.i18n.t('onlyWithSubscription_message'), true);
+        }
     });
 
     settings.action(/change-(take_max_order|priceType)/, async (ctx) => {
@@ -765,22 +798,26 @@ function botSettings() {
             } else if (match === 'priceType') {
                 update[match] = (data[match] === 'diff') ?
                     'price' : 'diff';
+                update['targetPrice'] = (update[match] === 'diff') ? 0.1 : 100;
             }
+
+            ctx.scene.state.data = await botDBService.update({ id: data.id }, update, 'after');
+
+            const message = messages.botSettings(user.lang, user, ctx.scene.state.data, message_id);
+    
+            sender.enqueue({
+                chat_id: ctx.from.id,
+                message
+            });
+        } else {
+            await ctx.answerCbQuery(ctx.i18n.t('onlyWithSubscription_message'), true);
         }
-
-        ctx.scene.state.data = await botDBService.update({ id: data.id }, update, 'after');
-
-        const message = messages.botSettings(user.lang, user, ctx.scene.state.data, message_id);
-
-        sender.enqueue({
-            chat_id: ctx.from.id,
-            message
-        });
     });
 
     settings.action(SET_REG, async (ctx) => {
         const { user } = ctx.state;
         const { message_id } = ctx.update.callback_query.message;
+        const { data } = ctx.scene.state;
 
         const key = ctx.match[1];
         const value = ctx.match[2];
@@ -788,8 +825,10 @@ function botSettings() {
         let update = null;
 
         if (key === 'fiat') {
-            update[key] = value;
-            update['payMethods'] = '[]';
+            update = {
+                [key]: value,
+                'payMethods': '[]'
+            };
 
             const fiat_message = messages.trial3days(user.lang, 1, update);
 
@@ -797,9 +836,19 @@ function botSettings() {
         } else if (key === 'payMethods') {
             const { payMethods } = ctx.scene.state;
 
-            update[key] = helper.setPayMethods(payMethods);
+            update = {
+                [key]: helper.setPayMethods(payMethods)
+            };
+        } else if (key === 'use_order_key') {
+            update = {
+                [key]: value
+            };
+
+            await ctx.answerCbQuery(ctx.i18n.t('selectedAPIKey_message', { name: value }), true);
         } else {
-            update[key] = value;
+            update = {
+                [key]: value
+            };
         }
 
         if (update) {
@@ -820,24 +869,41 @@ function botSettings() {
         await addPayMethod(ctx);
     });
 
-    settings.action(/(add|menu)-(api_keys)/, async (ctx) => {
+    settings.action(/(menu|add|select)-(APIKeys)/, async (ctx) => {
         const { user } = ctx.state;
         const { message_id } = ctx.update.callback_query.message;
         const { data } = ctx.scene.state;
 
         const key = ctx.match[1];
+        const value = ctx.match[2];
+
+        let message = null;
 
         if (key === 'menu') {
-            const message = messages.menuAPIKeys(user.lang, message_id);
+            if (value === 'APIKeys') {
+                message = messages.menuAPIKeys(user.lang, message_id);
+            }
+        } else if (key === 'add') {
+            if (value === 'APIKeys') {
+                return await ctx.scene.enter('api_keys', {
+                    message_id,
+                    bot_id: data.id
+                });
+            }
+        } else if (key === 'select') {
+            if (value === 'APIKeys') {
+                const APIKeys = data.order_keys;
 
+                ctx.scene.state.APIKeys = APIKeys;
+
+                message = messages.selectAPIKey(user.lang, data, APIKeys, 0, APIKeys.length, message_id);
+            }
+        }
+
+        if (message) {
             sender.enqueue({
                 chat_id: ctx.from.id,
                 message
-            });
-        } else if (key === 'add') {
-            await ctx.scene.enter('api_keys', {
-                message_id,
-                bot_id: data.id
             });
         }
     });
@@ -893,22 +959,45 @@ function botSettings() {
                     isUpdate = true;
                     update[step] = check.coin;
                 }
-            } else if (typeof text_num === 'number' &&
-                ((step === 'maxOrder' && text_num > data['minOrder'] && text_num > 0) ||
-                (step === 'minOrder' && text_num < data['maxOrder'] && text_num >= 0) ||
-                step === 'colCreateOrders')) {
+            } else if (typeof text_num === 'number') {
+                if (step === 'maxOrder') {
+                    if (text_num > data['minOrder'] && text_num > 0) {
+                        isUpdate = true;
+                    } else {
+                        message = messages.notCorrectData(user.lang, 'maxOrder');
+                    }
+                } else if (step === 'minOrder') {
+                    if (text_num < data['maxOrder'] && text_num >= 0) {
+                        isUpdate = true;
+                    } else {
+                        message = messages.notCorrectData(user.lang, 'minOrder');
+                    }
+                } else if (step === 'targetPrice') {
+                    if (data['priceType'] === 'diff') {
+                        if (text_num > 0 && text_num <= 100) {
+                            isUpdate = true;
+                        } else {
+                            message = messages.notCorrectData(user.lang, 'diff');
+                        }
+                    } else if (data['priceType'] === 'price') {
+                        isUpdate = true;
+                    } else {
+                        message = messages.notCorrectData(user.lang, 'price');
+                    }
+                } else {
                     isUpdate = true;
-                    update[step] = text_num;
-            } else if (step === 'targetPrice') {
-                if (data['priceType'] === 'diff' && text_num > 0 && text_num <= 100) {
-                    update[step] = text_num / 100;
-                } else if (data['priceType'] === 'price') {
-                    update[step] = text_num;
                 }
+
+                if (isUpdate) {
+                    update[step] = (data['priceType'] === 'diff') ?
+                        text_num / 100 : text_num;
+                }
+            } else {
+                message = messages.notCorrectData(user.lang, 'default');
             }
         }
         
-        if (step.includes('api_keys')) {
+        if (step.includes('APIKeys')) {
             const match = step.split('-');
 
             if (match[1] === 'name') {

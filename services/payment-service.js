@@ -15,8 +15,8 @@ class PaymentService extends Queue {
             price_currency: data.currency,
             order_id: data.type + '-' + data.period + '-' + id,
             order_description: data.type + ': ' + data.title,
-            success_url: process.env.BACKEND_URL + '/payment/success',
-            cancel_url: process.env.BACKEND_URL + '/payment/cancel'
+            success_url: process.env.WEBHOOK_URL + '/payment/success',
+            cancel_url: process.env.WEBHOOK_URL + '/payment/cancel'
         };
 
         return await this.api.createInvoice(temp);

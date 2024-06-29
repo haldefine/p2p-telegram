@@ -6,9 +6,9 @@ const { sender } = require('../services/sender');
 const {
     messageDBService,
     userDBService,
-    botDBService
+    botDBService,
+    orderDBService
 } = require('../services/db');
-const PaymentService = require('../services/payment-service');
 const BotService = require('../services/bot-service');
 
 const stnk = process.env.STNK_ID;
@@ -78,8 +78,9 @@ const commands = async (ctx, next) => {
         let response_message = null;
 
         if (text.includes('/start')) {
-            if (user.registrationStatus === 'subscription') {
-                response_message = messages.menu(user.lang);
+            if (user.registrationStatus === 'subscription' ||
+                (user.registratonStatus !== 'free' && user.assignedBots.length > 0)) {
+                    response_message = messages.menu(user.lang);
             } else {
                 response_message = messages.startTrial(user.lang);
             }
@@ -102,6 +103,16 @@ const commands = async (ctx, next) => {
 
         if (text.includes('/admin') && (user.isAdmin || ctx.from.id == stnk)) {
             return ctx.scene.enter('admin');
+        }
+
+        if (text === ctx.i18n.t('botMenu_button') &&
+            user.registrationStatus !== 'free' &&
+            user.registrationStatus !== '3days' &&
+            user.assignedBots.length > 0) {
+                const bot = await botDBService.get({ id: user.assignedBots[0] });
+                const orders = await orderDBService.getAll({ tg_id: ctx.from.id });
+
+                response_message = messages.botMenu(user.lang, user, bot, null, orders);
         }
 
         if (response_message) {
@@ -135,7 +146,15 @@ const cb = async (ctx, next) => {
             sender.deleteMessage(ctx.from.id, message_id);
 
             if (match[0] === 'cancel') {
-                response_message = messages.startTrial(user.lang);
+                await ctx.scene.leave();
+
+                if (user.assignedBots.length > 0 &&
+                    user.registrationStatus !== 'free' &&
+                    user.registrationStatus !== '3days') {
+                        response_message = messages.menu(user.lang);
+                } else {
+                    response_message = messages.startTrial(user.lang);
+                }
             }
         } else if (match[0] === 'trial') {
             if (user.assignedBots.length === 0 &&
@@ -229,6 +248,7 @@ const cb = async (ctx, next) => {
                                 };
 
                                 let isSuccess = false,
+                                    orders = [],
                                     error = '';
 
                                 const create = await BotService.createBot(user, _bot);
@@ -237,6 +257,7 @@ const cb = async (ctx, next) => {
                                     const start = await BotService.startBot(create.bot.id);
 
                                     if (start.isSuccess) {
+                                        orders = await orderDBService.getAll({ tg_id: ctx.from.id });
                                         isSuccess = true;
                                     } else {
                                         error = start.response;
@@ -246,12 +267,13 @@ const cb = async (ctx, next) => {
                                 }
 
                                 response_message = (isSuccess) ?
-                                    messages.botMenu(user.lang, user, create.bot, message_id) :
+                                    messages.botMenu(user.lang, user, create.bot, message_id, orders) :
                                     messages.botError(user.lang, create.bot, error);
                         }
                     }
                 } else {
-                    response_message = messages.answerCbQuery(user.lang, 'youNotSubscribeToChannel_message', true);
+                    //response_message = messages.answerCbQuery(user.lang, 'youNotSubscribeToChannel_message', true);
+                    await ctx.answerCbQuery(ctx.i18n.t('youNotSubscribeToChannel_message'), true);
                 }
             }
         } else if (match[0] === 'change') {
@@ -311,7 +333,8 @@ const cb = async (ctx, next) => {
 
             if (bot) {
                 if (bot.working) {
-                    response_message = messages.answerCbQuery(user.lang, 'stopBotToChange_message', true);
+                    //response_message = messages.answerCbQuery(user.lang, 'stopBotToChange_message', true);
+                    await ctx.answerCbQuery(ctx.i18n.t('stopBotToChange_message'), true);
                 } else {
                     return await ctx.scene.enter('settings', {
                         message_id,

@@ -24,7 +24,7 @@ const paginations = (lang, data, page, length, key, size = 5) => {
                 { text: i18n.t(lang, 'back_button'), callback_data: `next-${key}-${page - 1}` },
                 { text: i18n.t(lang, 'next_button'), callback_data: `next-${key}-${page + 1}` }
             ];
-        } else if (page === 0 && page * size < length) {
+        } else if (page === 0 && length > size) {
             inline_keyboard = [
                 { text: i18n.t(lang, 'next_button'), callback_data: `next-${key}-${page + 1}` }
             ];
@@ -41,7 +41,7 @@ const paginations = (lang, data, page, length, key, size = 5) => {
 const menu = (lang) => {
     const message = {
         type: 'text',
-        text: '...',
+        text: i18n.t(lang, 'menu_message'),
         extra: {
             reply_markup: {
                 resize_keyboard: true,
@@ -85,7 +85,7 @@ const startTrial = (lang) => {
     return message;
 };
 
-const botMenu = (lang, user, bot, message_id = null) => {
+const botMenu = (lang, user, bot, message_id = null, orders = []) => {
     const CONFIG = JSON.parse(fs.readFileSync('./config.json'));
 
     const message = {
@@ -111,15 +111,24 @@ const botMenu = (lang, user, bot, message_id = null) => {
             i18n.t(lang, 'stopBot_button') : i18n.t(lang, 'startBot_button');
         const startBot_cd = (bot.working) ?
             `stopBot-${bot.id}` : `startBot-${bot.id}`;
-        message.text = i18n.t(lang, 'botMenu_message', {
-            name: bot.name,
-            status: bot.working ? 'working' : 'not working'
-        });
+        const statisticsButton = (user.registrationStatus === '3orders') ?
+            [{ text: i18n.t(lang, 'buySub_button'), callback_data: 'buy-subscription' }] :
+            [{ text: i18n.t(lang, 'statistics_button'), callback_data: `statistics-${bot.id}` }];
+
+        message.text = (user.registrationStatus === '3orders') ?
+            i18n.t(lang, 'botMenu3orders_message', {
+                orders: 3 - orders.length
+            }) :
+            i18n.t(lang, 'botMenu_message', {
+                name: bot.name,
+                status: bot.working ? 'working' : 'not working',
+                subEnd: user.sub_end_date.toLocaleDateString('ru-RU')
+            });
 
         inline_keyboard = [
             [{ text: startBot_text, callback_data: startBot_cd }],
             [{ text: i18n.t(lang, 'settings_button'), callback_data: `settings-${bot.id}` }],
-            [{ text: i18n.t(lang, 'statisctics_button'), callback_data: `statistics-${bot.id}` }]
+            statisticsButton
         ];
     }
 
@@ -446,7 +455,7 @@ const botSettings = (lang, user, data, message_id = null) => {
                             isLock,
                             data: (data['payMethods'].length > 3) ? '✅' : '❌'
                         }),
-                        callback_data: 'choose-payMethods'
+                        callback_data: 'payMethods'
                     }],
                     [{
                         text: i18n.t(lang, 'coin_button', {
@@ -499,7 +508,11 @@ const botSettings = (lang, user, data, message_id = null) => {
                     }],
                     [{
                         text: i18n.t(lang, 'APIKeys_button'),
-                        callback_data: 'menu-api_keys'
+                        callback_data: 'menu-APIKeys'
+                    }],
+                    [{
+                        text: i18n.t(lang, 'back_button'),
+                        callback_data: 'cancel'
                     }]
                 ]
             }
@@ -562,7 +575,6 @@ const botSettingsType = (lang, step, data, message_id = null) => {
 };
 
 const payMethods = (lang, data, page, length, message_id = null) => {
-    const size = 5;
     const message = {
         type: (message_id) ? 'edit_text' : 'text',
         message_id,
@@ -571,10 +583,12 @@ const payMethods = (lang, data, page, length, message_id = null) => {
     };
 
     const temp = [];
-
+    const size = 5;
     const startIndex = page * size;
+    const endIndex = (startIndex + size < length) ?
+        startIndex + size : length;
 
-    for (let i = startIndex; i < startIndex + size; i++) {
+    for (let i = startIndex; i < endIndex; i++) {
         temp[temp.length] = [{
             text: (data[i].isAdded ? '✅ ' : '') + data[i].title,
             callback_data: `payMethod-${page}-${i}`
@@ -606,9 +620,9 @@ const menuAPIKeys = (lang, message_id = null) => {
         extra: {
             reply_markup: {
                 inline_keyboard: [
-                    [{ text: i18n.t(lang, 'addKey_button'), callback_data: 'add-api_keys' }],
-                    [{ text: i18n.t(lang, 'selectKey_button'), callback_data: 'select-api_keys' }],
-                    [{ text: i18n.t(lang, 'back'), callback_data: 'back' }]
+                    [{ text: i18n.t(lang, 'addKey_button'), callback_data: 'add-APIKeys' }],
+                    [{ text: i18n.t(lang, 'selectKey_button'), callback_data: 'select-APIKeys' }],
+                    [{ text: i18n.t(lang, 'back_button'), callback_data: 'back' }]
                 ]
             }
         }
@@ -671,6 +685,43 @@ const APIKeysAdded = (lang) => {
         type: 'text',
         text: i18n.t(lang, 'APIKeysAdded_message'),
         extra: {}
+    };
+
+    return message;
+};
+
+const selectAPIKey = (lang, bot, data, page, length, message_id = null) => {
+    const message = {
+        type: (message_id) ? 'edit_text' : 'text',
+        message_id,
+        text: i18n.t(lang, 'selectAPIKey_message', {
+            botName: bot.name,
+            APIName: bot.use_order_key
+        }),
+        extra: {}
+    };
+
+    const temp = [];
+    const size = 5;
+    const startIndex = page * size;
+    const endIndex = (startIndex + size < length) ?
+        startIndex + size : length;
+
+    for (let i = startIndex; i < endIndex; i++) {
+        temp[temp.length] = [{
+            text: data[i].name,
+            callback_data: `set-use_order_key-${data[i].name}`
+        }];
+    }
+
+    message.extra = {
+        reply_markup: {
+            inline_keyboard: [
+                ...temp,
+                [...paginations(lang, data, page, length, 'APIKeys')],
+                [{ text: i18n.t(lang, 'cancel_button'), callback_data: 'back' }]
+            ]
+        }
     };
 
     return message;
@@ -946,6 +997,7 @@ module.exports = {
     menuAPIKeys,
     addAPIKeys,
     APIKeysAdded,
+    selectAPIKey,
     choosePlan,
     enterPromoCode,
     incorrectPromoCode,
