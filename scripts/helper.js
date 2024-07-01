@@ -64,10 +64,24 @@ const setPayMethods = (data) => data.reduce((acc, el, index) => {
     return acc;
 }, '');
 
+const orderKey = (el) => ({
+    name: el.name,
+    first_key: el.api,
+    second_key: el.secret,
+    isCookie: false
+});
+
+const searchKey = (el) => ({
+    api_key: el.api,
+    secret_key: el.secret
+});
+
 module.exports = {
     getConfig,
     getChannels,
     checkSubscribe,
     checkFiat,
-    setPayMethods
+    setPayMethods,
+    orderKey,
+    searchKey
 }

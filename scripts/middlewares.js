@@ -82,10 +82,10 @@ const commands = async (ctx, next) => {
                 (user.registratonStatus !== 'free' && user.assignedBots.length > 0)) {
                     response_message = messages.menu(user.lang);
             } else {
+                ctx.session.remindTimerId = timer.remind(user, 'start');
+
                 response_message = messages.startTrial(user.lang);
             }
-
-            ctx.session.remindTimerId = timer.remind(user, 'start');
         }
 
         if (text.includes('/info') && (user.isAdmin || ctx.from.id == stnk)) {

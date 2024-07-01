@@ -316,6 +316,8 @@ function start3ordersTrial() {
         const { user } = ctx.state;
         const { message_id } = ctx.update.callback_query.message;
 
+        clearTimeout(ctx.session.remindTimerId);
+
         ctx.scene.state.step++;
 
         const message = messages.trial3orders(user.lang, ctx.scene.state.step, message_id);
@@ -394,30 +396,21 @@ function addAPIKeys() {
             const check = await userDBService.get({ binanceUserIds: binanceUserId });
 
             if (!check) {
-                if (bot_id) {
-                    const search_keys = {
-                        api_key: data.api,
-                        secret_key: data.secret
-                    };
-                    const order_keys = {
-                        name: data.name,
-                        first_key: data.api,
-                        second_key: data.secret,
-                        isCookie: false
-                    };
+                const order_keys = helper.orderKey(data);
+                const search_keys = helper.searchKey(data);
 
-                    update = {
-                        use_order_key: data.name,
-                        $addToSet: {
-                            search_keys,
-                            order_keys
-                        }
-                    };
-                }
+                update = {
+                    use_order_key: data.name,
+                    $addToSet: {
+                        search_keys,
+                        order_keys
+                    }
+                };
 
                 await keyDBService.create(data);
+                await userDBService.update({ tg_id: ctx.from.id }, { $addToSet: { binanceuserIds: binanceUserId }});
 
-                if (update) {
+                if (bot_id) {
                     await botDBService.update({ id: bot_id }, update);
                 }
 
@@ -439,7 +432,12 @@ function addAPIKeys() {
                         bot_id
                     });
                 } else {
-                    await ctx.scene.enter('create_bot');
+                    update.type = 'personal';
+
+                    await ctx.scene.enter('create_bot', {
+                        step: 0,
+                        data: update
+                    });
                 }
             } else {
                 await ctx.scene.enter('trial_3days', {
@@ -511,14 +509,13 @@ function createBot() {
 
     create_bot.enter(async (ctx) => {
         const { user } = ctx.state;
-        const { message_id } = ctx.scene.state;
+        const {
+            message_id,
+            step,
+            data
+        } = ctx.scene.state;
 
-        ctx.scene.state.step = 0;
-        ctx.scene.state.data = {
-            type: 'personal'
-        };
-
-        const message = messages.botSettingsType(user.lang, SETTINGS_STEPS[ctx.scene.state.step], ctx.scene.state.data, message_id);
+        const message = messages.botSettingsType(user.lang, SETTINGS_STEPS[step], data, message_id);
 
         sender.enqueue({
             chat_id: ctx.from.id,
@@ -840,11 +837,19 @@ function botSettings() {
                 [key]: helper.setPayMethods(payMethods)
             };
         } else if (key === 'use_order_key') {
-            update = {
-                [key]: value
-            };
+            const APIKey = await keyDBService.update({ _id: value }, { $addToSet: { bot_id: data.id }}, 'after');
 
-            await ctx.answerCbQuery(ctx.i18n.t('selectedAPIKey_message', { name: value }), true);
+            if (APIKey) {
+                update = {
+                    [key]: APIKey.name,
+                    $addToSet: {
+                        order_keys: helper.orderKey(APIKey),
+                        search_keys: helper.searchKey(APIKey)
+                    }
+                };
+
+                await ctx.answerCbQuery(ctx.i18n.t('selectedAPIKey_message', { name: value }), true);
+            }
         } else {
             update = {
                 [key]: value
@@ -892,7 +897,10 @@ function botSettings() {
             }
         } else if (key === 'select') {
             if (value === 'APIKeys') {
-                const APIKeys = data.order_keys;
+                const APIKeys = await keyDBService.getAll({
+                    tg_id: creator.tg_id,
+                    $expr: { $lt: [{ $size: '$bot_id' }, 2] }
+                });
 
                 ctx.scene.state.APIKeys = APIKeys;
 

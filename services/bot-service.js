@@ -1,3 +1,5 @@
+const helper = require('../scripts/helper');
+
 const WebService = require('./web-service');
 const {
     userDBService,
@@ -20,49 +22,49 @@ class BotService {
             assignedToUser.push(creator.tg_id);
         }
 
-        const req = (data.type === '3days') ?
-            {
-                $expr: { $lt: [{ $size: '$bot_id' }, 2] }
-            } :
-            {
-                tg_id: creator.tg_id,
-                $expr: { $lt: [{ $size: '$bot_id' }, 2] }
-            };
-        const keys = await keyDBService.getAll(req, {}, {}, 1);
+        if (data.type === '3days' || data.type === '3orders') {
+            const req = (data.type === '3days') ?
+                {
+                    $expr: { $lt: [{ $size: '$bot_id' }, 2] }
+                } :
+                {
+                    tg_id: creator.tg_id,
+                    $expr: { $lt: [{ $size: '$bot_id' }, 2] }
+                };
+            const keys = await keyDBService.getAll(req, {}, {}, 1);
+
+            if (keys[0]) {
+                const temp = keys.reduce((acc, el) => {
+                    acc.order_keys[acc.order_keys.length] = helper.orderKey(el);
+                    acc.search_keys[acc.search_keys.length] = helper.searchKey(el);
+                    return acc;
+                }, {
+                    order_keys: [],
+                    search_keys: []
+                });
+
+                newBot.use_order_key = temp.order_keys[0].name;
+                newBot.order_keys = temp.order_keys;
+                newBot.search_keys = temp.search_keys;
+            } else {
+                return {
+                    isSuccess: false,
+                    response: 'No keys available'
+                };
+            }
+        }
 
         if (data.type === '3orders') {
             newBot.maxOrder = 100;
         }
 
-        if (keys[0]) {
-            const temp = keys.reduce((acc, el) => {
-                acc.order_keys[acc.order_keys.length] = {
-                    name: el.name,
-                    first_key: el.api,
-                    second_key: el.secret,
-                    isCookie: false
-                };
-                acc.search_keys[acc.search_keys.length] = {
-                    api_key: el.api,
-                    secret_key: el.secret
-                };
-                return acc;
-            }, {
-                order_keys: [],
-                search_keys: []
-            });
-
-            newBot.use_order_key = temp.order_keys[0].name;
-            newBot.order_keys = temp.order_keys;
-            newBot.search_keys = temp.search_keys;
-        } else {
-            return {
-                isSuccess: false,
-                response: 'No keys available'
-            };
-        }
-
         const bot = await botDBService.create(newBot);
+
+        for (let i = 0; i < bot.order_keys.length; i++) {
+            const el = bot.order_keys[i];
+
+            await keyDBService.update({ api: el.first_key }, { $addToSet: { bot_id: bot.id }});
+        }
 
         for (const admin of admins) {
             if (admin.tg_id === creator.tg_id) {
