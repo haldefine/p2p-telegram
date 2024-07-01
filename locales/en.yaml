@@ -15,10 +15,18 @@ menu3days_message: '<b>🕒 You’re Currently on a Trial Period</b>
 
 Your trial will end on <b>${subEndDate}</b>
 
+
+Attention: the number of orders per day depends on market activity. You just have to wait for new notifications.
+
+
+Bot status: Active 🟢
+
+
 To continue enjoying full access to our bot’s features, consider purchasing a subscription. Unlock all the tools and services designed to enhance your trading experience.
 
 
 <b>🚀 Buy Subscription</b>
+
 
 Click the button below to upgrade now and maintain uninterrupted access to all functionalities!'
 
@@ -50,7 +58,9 @@ You will receive a new order once it is your turn.
 🌟 Skip the Wait! Purchase a subscription now to bypass the queue and receive orders instantly, without any delays.
 
 
-Click below to upgrade and enjoy uninterrupted access to all orders!'
+Click below to upgrade and enjoy uninterrupted access to all orders!
+
+Bot status: ${status}'
 
 trial3days_message: '<b>🎉 Your 3-Day Free Trial Has Begun!</b>
 

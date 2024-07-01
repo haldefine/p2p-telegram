@@ -36,38 +36,40 @@ class Sender extends Queue {
 
             const res = await this.sendMessage(chat_id, message);
 
-            if (message.delete) {
-                setTimeout(() => this.deleteMessage(chat_id, res.message_id), message.delete);
-            }
+            if (res) {
+                if (message.delete) {
+                    setTimeout(() => this.deleteMessage(chat_id, res.message_id), message.delete);
+                }
 
-            if (message.deleteAfterAction) {
-                await userDBService.update({ tg_id: chat_id }, {
-                    last_message_id: res.message_id
-                });
-            }
+                if (message.deleteAfterAction) {
+                    await userDBService.update({ tg_id: chat_id }, {
+                        last_message_id: res.message_id
+                    });
+                }
 
-            if (expand) {
-                expand.type = 'edit_text';
-                expand.message_id = res.message_id;
+                if (expand) {
+                    expand.type = 'edit_text';
+                    expand.message_id = res.message_id;
 
-                await messageDBService.create({
-                    chat_id: chat_id,
-                    type: 'expand',
-                    message_id: res.message_id,
-                    message: expand
-                });
-            }
+                    await messageDBService.create({
+                        chat_id: chat_id,
+                        type: 'expand',
+                        message_id: res.message_id,
+                        message: expand
+                    });
+                }
 
-            if (collapse) {
-                collapse.type = 'edit_text';
-                collapse.message_id = res.message_id;
+                if (collapse) {
+                    collapse.type = 'edit_text';
+                    collapse.message_id = res.message_id;
 
-                await messageDBService.create({
-                    chat_id: chat_id,
-                    type: 'collapse',
-                    message_id: res.message_id,
-                    message: collapse
-                });
+                    await messageDBService.create({
+                        chat_id: chat_id,
+                        type: 'collapse',
+                        message_id: res.message_id,
+                        message: collapse
+                    });
+                }
             }
 
             if (this.counter % 29 === 0) {

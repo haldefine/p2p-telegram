@@ -18,23 +18,26 @@ class EventsService {
     async handleEvent(message) {
         const data = (message && typeof message === 'string') ? JSON.parse(message) : message;
 
-        console.log('[handleEvent]', data);
-
         if (data && data.botId) {
             const bot = await botDBService.get({ id: data.botId });
 
             if (!bot) {
-                console.log(`Can't find bot`, data);
+                console.log(`[handleEvent] Can't find bot`, data);
                 return null;
             }
 
             if (data.error) {
+                console.log('[handleEvent] Error', data.error);
+
                 await this.proceedError(bot, data);
             }
 
             if (data.order && data.responses) {
                 const order = JSON.parse(data.order);
                 const responses = JSON.parse(data.responses);
+
+                console.log('[handleEvent] Order', order);
+                console.log('[handleEvent] Resonses', responses);
 
                 await this.proceedOrder(bot, order, responses);
             }
@@ -89,8 +92,19 @@ class EventsService {
             const side = binanceResponse?.data?.orderMatch?.tradeType;
             const proxy = bot.proxies[response.numProxy];
 
-            responsesTextUser += messages.orderTextForUser('en', orderNo, binanceResponse.message || binanceResponse.msg);
-            responsesTextAdmin += messages.orderTextForAdmin('en', orderNo, proxy.host, proxy.username, response.delay, binanceResponse.message || binanceResponse.msg);
+            responsesTextUser += messages.orderTextForUser('en',
+                orderNo,
+                binanceResponse.message || binanceResponse.msg
+            );
+            responsesTextAdmin += messages.orderTextForAdmin('en',
+                orderNo,
+                proxy.host,
+                proxy.username,
+                response.delay,
+                binanceResponse.message || binanceResponse.msg
+            );
+
+            console.log(responsesTextUser, responsesTextAdmin)
 
             if (binanceResponse.code === '000000') {
                 // const payMethods = [];
@@ -128,11 +142,11 @@ class EventsService {
             });
         }
 
-        const targetUser = users.find(user => user.role !== 'admin');
+        //const targetUser = users.find(user => user.role !== 'admin');
 
         for (const user of users) {
             const fullData = {
-                tg_id: targetUser.tg_id,
+                tg_id: user.tg_id,
                 bot_id: bot.id,
                 result: (user.registrationStatus === '3days') ?
                     'new' : result,
@@ -143,7 +157,7 @@ class EventsService {
                 totalAmount: order.totalAmount.toFixed(2),
                 minVolume: order.min_volume,
                 maxVolume: order.max_volume,
-                user: targetUser,
+                user,
                 dateTime: this.getTime(),
                 botName: bot.name,
                 advNo: order.advNo,
@@ -168,24 +182,24 @@ class EventsService {
                 collapse: message
             });
 
-            if (targetUser.registrationStatus !== '3days') {
+            if (user.registrationStatus !== '3days') {
                 await orderDBService.create(fullData);
             }
 
-            if (targetUser.registrationStatus === 'free') {
+            if (user.registrationStatus === 'free') {
                 await BotService.stopBot(bot.id);
             }
 
-            if (targetUser.registrationStatus === '3orders') {
-                const counter = await orderDBService.getCount({ tg_id: targetUser.tg_id });
+            if (user.registrationStatus === '3orders') {
+                const counter = await orderDBService.getCount({ tg_id: user.tg_id });
 
                 if (counter >= 3) {
-                    await userDBService.update({ tg_id: targetUser.tg_id }, { registrationStatus: 'free' });
+                    await userDBService.update({ tg_id: user.tg_id }, { registrationStatus: 'free' });
                     await BotService.stopBot(bot.id);
 
-                    timer.remind(targetUser.lang, 'reachedFreeOrderLimit', 3600000);
+                    timer.remind(user, 'reachedFreeOrderLimit', 3600000);
                 } else if (counter === 2) {
-                    timer.remind(targetUser.lang, 'lastOrder', 600000);
+                    timer.remind(user, 'lastOrder', 600000);
                 }
             }
         }

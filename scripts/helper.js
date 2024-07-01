@@ -46,23 +46,39 @@ const checkFiat = (data, _) => data.reduce((acc, el) => {
     return acc;
 }, []);
 
-const setPayMethods = (data) => data.reduce((acc, el, index) => {
-    if (el.isAdded) {
-        if (index === 0) {
-            acc += '[';
-        }
+const getPayMethods = (data, added = []) => {
+    const temp = [];
 
-        acc += el.title;
+    for (let i = 0; i < data.length; i++) {
+        const el = data[i];
+        temp[temp.length] = {
+            title: el,
+            isAdded: (added.length === 0 || added.includes(el)) ? true : false
+        };
+    }
+
+    return temp;
+};
+
+const setPayMethods = (data) => data.reduce((acc, el, index) => {
+    if (index === 0) {
+        acc = '[';
+    }
+
+    if (el.isAdded) {
+        acc += `"${el.title}"`;
 
         if (index < data.length - 1) {
             acc += ',';
-        } else {
-            acc += ']';
         }
     }
 
+    if (index === data.length - 1) {
+        acc += ']';
+    }
+
     return acc;
-}, '');
+}, '[]');
 
 const orderKey = (el) => ({
     name: el.name,
@@ -81,6 +97,7 @@ module.exports = {
     getChannels,
     checkSubscribe,
     checkFiat,
+    getPayMethods,
     setPayMethods,
     orderKey,
     searchKey

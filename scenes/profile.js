@@ -111,18 +111,9 @@ const getPayMethods = async (ctx) => {
     const { data } = ctx.scene.state;
 
     if (data['fiat']) {
-        let payMethods = await BinanceService.getPayMethods(data['fiat']);
+        const payMethods = helper.getPayMethods(await BinanceService.getPayMethods(data['fiat']), JSON.parse(data['payMethods']));
 
         if (payMethods.length > 0) {
-            payMethods = payMethods.reduce((acc, el) => {
-                acc[acc.length] = {
-                    title: el,
-                    isAdded: false
-                };
-
-                return acc;
-            }, []);
-
             ctx.scene.state.payMethods = payMethods;
 
             const message = messages.payMethods(user.lang, payMethods, 0, payMethods.length, message_id);
@@ -415,7 +406,7 @@ function addAPIKeys() {
                 }
 
                 isLeave = true;
-                message = messages.APIKeysAdded(user.lang, message_id);
+                message = messages.answerCbQuery(user.lang, 'APIKeysAdded_message', true);
             } else {
                 message = messages.answerCbQuery(user.lang, 'userIdIsAlredyUse_message', true);
             }
@@ -423,9 +414,9 @@ function addAPIKeys() {
             message = messages.answerCbQuery(user.lang, 'APIKeysIsNotCorrect_message', true);
         }
 
-        if (isLeave) {
-            await ctx.replyWithHTML(message.text, message.extra);
+        await ctx.answerCbQuery(message.text, message.extra.show_alert);
 
+        if (isLeave) {
             if (user.registrationStatus === 'personal') {
                 if (bot_id) {
                     await ctx.scene.enter('settings', {
@@ -447,8 +438,6 @@ function addAPIKeys() {
                     }
                 });
             }
-        } else {
-            await ctx.answerCbQuery(message.text, message.extra.show_alert);
         }
     });
 
@@ -822,14 +811,12 @@ function botSettings() {
         let update = null;
 
         if (key === 'fiat') {
+            //const payMethods = helper.getPayMethods(await BinanceService.getPayMethods(data['fiat']));
+
             update = {
                 [key]: value,
-                'payMethods': '[]'
+                'payMethods': '[]' // helper.setPayMethods(payMethods)
             };
-
-            const fiat_message = messages.trial3days(user.lang, 1, update);
-
-            await ctx.replyWithHTML(fiat_message.text, fiat_message.extra);
         } else if (key === 'payMethods') {
             const { payMethods } = ctx.scene.state;
 
@@ -867,7 +854,13 @@ function botSettings() {
     });
 
     settings.action('payMethods', async (ctx) => {
-        await getPayMethods(ctx);
+        const { user } = ctx.state;
+
+        if (user.registrationStatus === 'subscription') {
+            await getPayMethods(ctx);
+        } else {
+            await ctx.answerCbQuery(ctx.i18n.t('onlyWithSubscription_message'), true);
+        }
     });
 
     settings.action(PAYMETHOD_REG, async (ctx) => {
@@ -953,9 +946,11 @@ function botSettings() {
             const check = await checkFiat(user, text);
 
             if (check.isSuccess) {
+                //const payMethods = helper.getPayMethods(await BinanceService.getPayMethods(check.currency));
+
                 isUpdate = true;
                 update[step] = check.currency;
-                update['payMethods'] = '[]';
+                update['payMethods'] = '[]'; // helper.setPayMethods(payMethods);
             }
 
             message = check.message;
@@ -1005,7 +1000,7 @@ function botSettings() {
             }
         }
         
-        if (step.includes('APIKeys')) {
+        if (step && step.includes('APIKeys')) {
             const match = step.split('-');
 
             if (match[1] === 'name') {

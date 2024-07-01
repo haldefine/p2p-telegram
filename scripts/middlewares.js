@@ -143,18 +143,25 @@ const cb = async (ctx, next) => {
             response_message = null;
 
         if (match[0] === 'cancel' || match[0] === 'proceed') {
-            sender.deleteMessage(ctx.from.id, message_id);
-
             if (match[0] === 'cancel') {
                 await ctx.scene.leave();
 
                 if (user.assignedBots.length > 0 &&
                     user.registrationStatus !== 'free' &&
                     user.registrationStatus !== '3days') {
-                        response_message = messages.menu(user.lang);
+                        const bot = await botDBService.get({ assignedToUser: ctx.from.id });
+                        const orders = await orderDBService.getAll({ tg_id: ctx.from.id });
+
+                        if (bot) {
+                            response_message = messages.botMenu(user.lang, user, bot, message_id, orders);
+                        }
                 } else {
+                    sender.deleteMessage(ctx.from.id, message_id);
+
                     response_message = messages.startTrial(user.lang);
                 }
+            } else {
+                sender.deleteMessage(ctx.from.id, message_id);
             }
         } else if (match[0] === 'trial') {
             if (user.assignedBots.length === 0 &&

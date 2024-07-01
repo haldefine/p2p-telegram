@@ -117,11 +117,12 @@ const botMenu = (lang, user, bot, message_id = null, orders = []) => {
 
         message.text = (user.registrationStatus === '3orders') ?
             i18n.t(lang, 'botMenu3orders_message', {
-                orders: 3 - orders.length
+                orders: 3 - orders.length,
+                status: bot.working ? 'Active 🟢' : 'Stopped 🔴'
             }) :
             i18n.t(lang, 'botMenu_message', {
                 name: bot.name,
-                status: bot.working ? 'working' : 'not working',
+                status: bot.working ? 'Active 🟢' : 'Stopped 🔴',
                 subEnd: user.sub_end_date.toLocaleDateString('ru-RU')
             });
 
@@ -431,6 +432,7 @@ const orderExpand = (lang, data) => {
 
 const botSettings = (lang, user, data, message_id = null) => {
     const isLock = (user.registrationStatus === 'subscription') ? '' : '🔒';
+    const _payMethods = JSON.parse(data['payMethods']);
     const message = {
         type: (message_id) ? 'edit_text' : 'text',
         message_id,
@@ -453,7 +455,7 @@ const botSettings = (lang, user, data, message_id = null) => {
                     [{
                         text: i18n.t(lang, 'payMethods_button', {
                             isLock,
-                            data: (data['payMethods'].length > 3) ? '✅' : '❌'
+                            data: _payMethods.length
                         }),
                         callback_data: 'payMethods'
                     }],
@@ -488,7 +490,8 @@ const botSettings = (lang, user, data, message_id = null) => {
                     [{
                         text: i18n.t(lang, 'targetPrice_button', {
                             isLock,
-                            data: data['targetPrice']
+                            data: (data['priceType'] === 'diff') ?
+                                `From ${data['targetPrice'] * 100} %` : `Less ${data['targetPrice']}`
                         }),
                         callback_data: 'choose-targetPrice'
                     }],
@@ -502,7 +505,7 @@ const botSettings = (lang, user, data, message_id = null) => {
                     [{
                         text: i18n.t(lang, 'takeMaxOrder_button', {
                             isLock,
-                            data: (data['take_max_order']) ? '✅' : '❌'
+                            data: (data['take_max_order']) ? 'On' : 'Off'
                         }),
                         callback_data: 'change-take_max_order'
                     }],
@@ -675,16 +678,6 @@ const addAPIKeys = (lang, step, data, message_id = null) => {
         reply_markup: {
             inline_keyboard
         }
-    };
-
-    return message;
-};
-
-const APIKeysAdded = (lang) => {
-    const message = {
-        type: 'text',
-        text: i18n.t(lang, 'APIKeysAdded_message'),
-        extra: {}
     };
 
     return message;
@@ -996,7 +989,6 @@ module.exports = {
     payMethods,
     menuAPIKeys,
     addAPIKeys,
-    APIKeysAdded,
     selectAPIKey,
     choosePlan,
     enterPromoCode,

@@ -19,6 +19,10 @@ class WebService {
         app.use(bodyParser.text());
         app.use(bodyParser.json());
 
+        app.get('/payment/success', async (req, res) => {
+            res.send('Success');
+        });
+
         app.post('/', (req, res) => {
             if (this.eventHandler) {
                 this.eventHandler(req.body).catch(console.log);
@@ -33,6 +37,8 @@ class WebService {
                 params,
                 body
             } = req;
+
+            console.log(req)
 
             let message = null;
 
