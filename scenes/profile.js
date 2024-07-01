@@ -898,7 +898,7 @@ function botSettings() {
         } else if (key === 'select') {
             if (value === 'APIKeys') {
                 const APIKeys = await keyDBService.getAll({
-                    tg_id: creator.tg_id,
+                    tg_id: ctx.from.id,
                     $expr: { $lt: [{ $size: '$bot_id' }, 2] }
                 });
 
