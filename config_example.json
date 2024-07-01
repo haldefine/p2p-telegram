@@ -7,14 +7,14 @@
             "type": "Subscription",
             "title": "1 month",
             "period": 30,
-            "amount": 1,
+            "amount": 10,
             "currency": "usd"
         },
         {
             "type": "Subscription",
             "title": "3 months",
             "period": 90,
-            "amount": 3,
+            "amount": 11,
             "currency": "usd"
         }
     ]
